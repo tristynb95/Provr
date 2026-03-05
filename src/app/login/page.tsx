@@ -61,6 +61,7 @@ export default function LoginPage() {
         description: `Signed in as ${user.role}.`,
       });
       router.push('/');
+      setLoading(false);
     } catch (err) {
       console.error(err);
       toast({
