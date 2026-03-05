@@ -4,11 +4,6 @@ service cloud.firestore {
 
     /**
      * PROVR PULSE SECURITY RULES
-     *
-     * CORE PHILOSOPHY:
-     * This ruleset implements a robust, identity-based security model.
-     * Note: In this prototype, we allow unauthenticated writes to key collections 
-     * to support the "First-Run Seeding" pattern triggered from the login page.
      */
 
     // --- Helper Functions ---
@@ -17,19 +12,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      // In this prototype, we prioritize site-specific roles defined in the user document.
-      return true; // Simplified for prototype accessibility
-    }
-
     // --- Collection Rules ---
 
     /**
      * @description Rules for user profiles.
+     * We allow unauthenticated read for username lookup and unauthenticated create for seeding.
      */
     match /users/{userId} {
       allow read, list, write: if true; 
@@ -44,6 +31,7 @@ service cloud.firestore {
 
     /**
      * @description Global bakery sites.
+     * We allow unauthenticated read/write for seeding and site lookup.
      */
     match /sites/{siteId} {
       allow read, write: if true;
@@ -80,6 +68,7 @@ service cloud.firestore {
 
     /**
      * @description Shower thoughts.
+     * We allow unauthenticated create for anonymous submissions.
      */
     match /showerThoughts/{showerThoughtId} {
       allow get, list, create, update, delete: if true;

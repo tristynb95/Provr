@@ -5,6 +5,7 @@ import { ClipboardCheck, Sparkles, UserCheck, ShieldCheck, Heart } from "lucide-
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+
 const surveyTypes = [
   {
     title: "SPARK Competency",

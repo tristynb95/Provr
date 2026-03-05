@@ -16,11 +16,15 @@ export function initializeFirebase() {
     try {
       // Attempt to initialize via Firebase App Hosting environment variables
       firebaseApp = initializeApp();
+      
+      // Verification check: ensure the app is actually configured correctly
+      if (!firebaseApp.options.apiKey) {
+        throw new Error('Firebase automatic initialization returned an app with no API key.');
+      }
     } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
+      // Fallback to manual configuration
       if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+        console.warn('Automatic initialization failed or returned invalid config. Falling back to firebase config object.', e);
       }
       firebaseApp = initializeApp(firebaseConfig);
     }
