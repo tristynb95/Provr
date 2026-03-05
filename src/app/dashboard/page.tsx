@@ -1,9 +1,9 @@
-
 import { Navbar } from "@/components/layout/Navbar";
 import { AISummaryCard } from "@/components/dashboard/AISummaryCard";
 import { FeedbackComparison } from "@/components/dashboard/FeedbackComparison";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { ArrowUpRight, TrendingUp, MessageSquare, Award } from "lucide-react";
 
 export default function DashboardPage() {
