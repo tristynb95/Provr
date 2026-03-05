@@ -11,7 +11,6 @@ import {
   Settings, 
   Activity, 
   Database, 
-  MapPin,
   Plus,
   Trash2,
   UserCog,
@@ -19,7 +18,8 @@ import {
   Filter,
   Lock,
   User as UserIcon,
-  Map as MapIcon
+  Map as MapIcon,
+  AlertTriangle
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 
 const INITIAL_SITES = [
   { id: "s1", name: "Downtown Bakery", location: "123 Main St", manager: "Jack Thompson" },
@@ -52,6 +63,11 @@ export default function AdminPage() {
   const [sites, setSites] = useState(INITIAL_SITES);
   const [users, setUsers] = useState(INITIAL_USERS);
   const [filterSite, setFilterSite] = useState("all");
+  
+  // Deletion State
+  const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('provr_user');
@@ -79,24 +95,36 @@ export default function AdminPage() {
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'Super Admin';
   const isBakeryManager = currentUser?.role === 'Bakery Manager';
 
-  const handleDeleteSite = (id: string) => {
+  const initiateDeleteSite = (site: any) => {
     if (!isSuperAdmin) {
       toast({ variant: "destructive", title: "Access Denied", description: "Only Super Admins can manage sites." });
       return;
     }
+    setSiteToDelete(site);
+    setDeleteConfirmText("");
+    setIsDeleteDialogOpen(true);
+  };
 
-    const siteToDelete = sites.find(s => s.id === id);
+  const handleConfirmDelete = () => {
     if (!siteToDelete) return;
+    
+    if (deleteConfirmText !== `delete ${siteToDelete.name}`) {
+      toast({ variant: "destructive", title: "Incorrect Confirmation", description: "The text entered does not match the required format." });
+      return;
+    }
 
     // Remove the site
-    setSites(sites.filter(s => s.id !== id));
+    setSites(sites.filter(s => s.id !== siteToDelete.id));
     // Remove all users associated with this site (Delete the team)
-    setUsers(users.filter(u => u.siteId !== id));
+    setUsers(users.filter(u => u.siteId !== siteToDelete.id));
 
     toast({ 
       title: "Site & Team Removed", 
-      description: `The site "${siteToDelete.name}" and all associated staff have been deleted.` 
+      description: `The site "${siteToDelete.name}" and all associated staff have been permanently deleted.` 
     });
+    
+    setIsDeleteDialogOpen(false);
+    setSiteToDelete(null);
   };
 
   const updateSiteField = (siteId: string, field: string, value: string) => {
@@ -135,6 +163,8 @@ export default function AdminPage() {
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Verifying credentials...</div>;
   }
+
+  const expectedConfirmText = siteToDelete ? `delete ${siteToDelete.name}` : "";
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -387,7 +417,7 @@ export default function AdminPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteSite(site.id)}
+                                onClick={() => initiateDeleteSite(site)}
                                 title="Delete site and entire team"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -433,6 +463,48 @@ export default function AdminPage() {
           </section>
         )}
       </main>
+
+      {/* Irreversible Deletion Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 text-destructive mb-2">
+              <AlertTriangle className="h-6 w-6" />
+              <AlertDialogTitle className="font-headline text-xl">Irreversible Action</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="space-y-4">
+              <p className="font-bold text-foreground">
+                You are about to delete the site <span className="underline">"{siteToDelete?.name}"</span> and all associated staff accounts.
+              </p>
+              <p>
+                This action cannot be undone. All data related to this site and its team will be permanently removed from the system.
+              </p>
+              <div className="pt-4 space-y-3">
+                <Label htmlFor="delete-confirm" className="text-xs font-bold uppercase text-muted-foreground">
+                  Type <code className="bg-muted px-1 py-0.5 rounded text-destructive">{expectedConfirmText}</code> to confirm
+                </Label>
+                <Input 
+                  id="delete-confirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={`Type "${expectedConfirmText}"`}
+                  className="border-destructive focus-visible:ring-destructive"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete}
+              disabled={deleteConfirmText !== expectedConfirmText}
+            >
+              Permanently Delete Site & Team
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
