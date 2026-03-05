@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,24 +10,24 @@
     --card-foreground: 0 4% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 4% 15%;
-    --primary: 355 59% 30%; /* #7A1F26 */
+    --primary: 358 91% 43%; /* #D10A11 */
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 90%;
     --secondary-foreground: 0 4% 15%;
     --muted: 0 0% 88%;
     --muted-foreground: 0 4% 35%;
-    --accent: 355 59% 30%;
+    --accent: 358 91% 43%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 358 85% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 80%;
     --input: 0 0% 80%;
-    --ring: 355 59% 30%;
+    --ring: 358 91% 43%;
     --radius: 0.75rem;
-    --chart-1: 355 59% 30%;
+    --chart-1: 358 91% 43%;
     --chart-2: 0 4% 15%;
     --chart-3: 0 0% 60%;
-    --chart-4: 355 40% 45%;
+    --chart-4: 358 60% 30%;
     --chart-5: 0 0% 40%;
   }
 
@@ -39,19 +38,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 4% 12%;
     --popover-foreground: 0 0% 98%;
-    --primary: 355 59% 40%;
+    --primary: 358 91% 55%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 4% 20%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 4% 20%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 355 59% 40%;
+    --accent: 358 91% 55%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 358 62.8% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 4% 25%;
     --input: 0 4% 25%;
-    --ring: 355 59% 40%;
+    --ring: 358 91% 55%;
   }
 }
 

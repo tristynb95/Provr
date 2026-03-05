@@ -81,7 +81,7 @@ export default function PulseCheckPage() {
                       htmlFor={`workload-${val}`}
                       className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                     >
-                      {val === 1 && <Frown className="mb-3 h-6 w-6 text-red-500" />}
+                      {val === 1 && <Frown className="mb-3 h-6 w-6 text-destructive" />}
                       {val === 2 && <Frown className="mb-3 h-6 w-6 opacity-60" />}
                       {val === 3 && <Meh className="mb-3 h-6 w-6 text-yellow-500" />}
                       {val === 4 && <Smile className="mb-3 h-6 w-6 opacity-60" />}

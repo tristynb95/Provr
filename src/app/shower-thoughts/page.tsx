@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -80,26 +79,26 @@ export default function ShowerThoughtsPage() {
                       </ul>
                     </div>
 
-                    <div className="bg-red-900/30 p-4 rounded-xl backdrop-blur-sm border border-red-500/20">
-                      <div className="flex items-center gap-2 mb-3 text-red-200 font-bold text-xs uppercase">
+                    <div className="bg-destructive/20 p-4 rounded-xl backdrop-blur-sm border border-destructive/20">
+                      <div className="flex items-center gap-2 mb-3 text-destructive font-bold text-xs uppercase">
                         <AlertCircle className="h-4 w-4" />
                         Urgent Concerns
                       </div>
                       <ul className="space-y-1">
                         {summary.urgentConcerns.map((t, i) => (
-                          <li key={i} className="text-sm text-red-100/90">• {t}</li>
+                          <li key={i} className="text-sm text-foreground/90">• {t}</li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="bg-green-900/30 p-4 rounded-xl backdrop-blur-sm border border-green-500/20">
-                      <div className="flex items-center gap-2 mb-3 text-green-200 font-bold text-xs uppercase">
+                    <div className="bg-green-900/10 p-4 rounded-xl backdrop-blur-sm border border-green-500/10">
+                      <div className="flex items-center gap-2 mb-3 text-green-700 dark:text-green-300 font-bold text-xs uppercase">
                         <Heart className="h-4 w-4" />
                         Positive Sentiment
                       </div>
                       <ul className="space-y-1">
                         {summary.positiveSentiments.map((t, i) => (
-                          <li key={i} className="text-sm text-green-100/90">• {t}</li>
+                          <li key={i} className="text-sm text-foreground/90">• {t}</li>
                         ))}
                       </ul>
                     </div>
