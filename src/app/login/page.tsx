@@ -9,11 +9,8 @@ import { Label } from '@/components/ui/label';
 import { MessageSquareText, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserByUsername, seedInitialData } from '@/lib/firestore';
-<<<<<<< HEAD
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-=======
->>>>>>> e98354011ba006e20c3bfd6b85351b940e0741a1
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -66,11 +63,8 @@ export default function LoginPage() {
         description: `Signed in as ${user.role}.`,
       });
       router.push('/');
-<<<<<<< HEAD
       setLoading(false);
     } catch (err: any) {
-      // If it's already a FirestorePermissionError, it was likely emitted by the lib.
-      // If it's a raw Firebase error caught here, we emit it to trigger the listener.
       if (err.code === 'permission-denied') {
          // This is handled by the emitters in firestore.ts, but we catch it here to prevent standard console error
       } else {
@@ -80,15 +74,6 @@ export default function LoginPage() {
           description: "Could not reach the server. Please try again.",
         });
       }
-=======
-    } catch (err) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Connection error",
-        description: "Could not reach the server. Please try again.",
-      });
->>>>>>> e98354011ba006e20c3bfd6b85351b940e0741a1
       setLoading(false);
     }
   };
