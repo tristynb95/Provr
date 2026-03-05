@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, MessageSquare, ClipboardCheck, Sparkles, User, MessageSquareText } from "lucide-react";
+import { LayoutDashboard, MessageSquare, ClipboardCheck, Sparkles, User, MessageSquareText, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
   { label: "Surveys", href: "/surveys", icon: ClipboardCheck },
   { label: "Dashboard", href: "/dashboard", icon: Sparkles },
+  { label: "Pulse", href: "/pulse", icon: Heart },
   { label: "Shower Thoughts", href: "/shower-thoughts", icon: MessageSquare },
 ];
 

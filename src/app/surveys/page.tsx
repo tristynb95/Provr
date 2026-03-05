@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardCheck, Sparkles, UserCheck, ShieldCheck } from "lucide-react";
+import { ClipboardCheck, Sparkles, UserCheck, ShieldCheck, Heart } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,13 @@ const surveyTypes = [
     icon: ClipboardCheck,
     color: "bg-blue-100 text-blue-700",
     href: "/surveys/general"
+  },
+  {
+    title: "Pulse Check",
+    description: "A quick weekly check-in on how you are feeling and your workload.",
+    icon: Heart,
+    color: "bg-red-50 text-primary",
+    href: "/pulse"
   },
   {
     title: "Self Assessment",
