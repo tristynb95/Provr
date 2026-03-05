@@ -123,6 +123,13 @@ export function Navbar() {
             {item.label}
           </Link>
         ))}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-destructive"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
       </div>
     </nav>
   );
