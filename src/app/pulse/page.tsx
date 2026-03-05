@@ -11,19 +11,45 @@ import { Heart, Smile, Frown, Meh, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { addPulseResponse } from "@/lib/firestore";
 
 export default function PulseCheckPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [nps, setNps] = useState([5]);
+  const [workload, setWorkload] = useState("3");
+  const [leadership, setLeadership] = useState(4);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    toast({
-      title: "Pulse received!",
-      description: "Thank you for sharing how you feel today.",
-    });
-    router.push("/");
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const storedUser = localStorage.getItem('provr_user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+
+      await addPulseResponse({
+        authorUsername: user?.username ?? "unknown",
+        siteId: user?.siteId ?? "unassigned",
+        nps: nps[0],
+        workload: parseInt(workload, 10),
+        leadership,
+      });
+
+      toast({
+        title: "Pulse received!",
+        description: "Thank you for sharing how you feel today.",
+      });
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Failed to submit",
+        description: "Could not save your pulse. Please try again.",
+      });
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -58,11 +84,11 @@ export default function PulseCheckPage() {
                   <span>Neutral</span>
                   <span>Extremely likely</span>
                 </div>
-                <Slider 
-                  value={nps} 
-                  onValueChange={setNps} 
-                  max={10} 
-                  step={1} 
+                <Slider
+                  value={nps}
+                  onValueChange={setNps}
+                  max={10}
+                  step={1}
                   className="py-4"
                 />
                 <div className="text-center">
@@ -73,7 +99,7 @@ export default function PulseCheckPage() {
             )}
 
             {step === 2 && (
-              <RadioGroup defaultValue="3" className="grid grid-cols-5 gap-2">
+              <RadioGroup value={workload} onValueChange={setWorkload} className="grid grid-cols-5 gap-2">
                 {[1, 2, 3, 4, 5].map((val) => (
                   <div key={val}>
                     <RadioGroupItem value={val.toString()} id={`workload-${val}`} className="peer sr-only" />
@@ -99,9 +125,13 @@ export default function PulseCheckPage() {
                   <Button
                     key={val}
                     variant="outline"
-                    className="h-16 w-16 rounded-full border-2 hover:border-primary hover:text-primary transition-all p-0"
+                    className={cn(
+                      "h-16 w-16 rounded-full border-2 hover:border-primary hover:text-primary transition-all p-0",
+                      val <= leadership ? "border-primary" : ""
+                    )}
+                    onClick={() => setLeadership(val)}
                   >
-                    <Star className={cn("h-6 w-6", val <= 4 ? "fill-primary text-primary" : "text-muted-foreground")} />
+                    <Star className={cn("h-6 w-6", val <= leadership ? "fill-primary text-primary" : "text-muted-foreground")} />
                   </Button>
                 ))}
               </div>
@@ -114,7 +144,9 @@ export default function PulseCheckPage() {
             {step < 3 ? (
               <Button onClick={() => setStep(step + 1)}>Next Question</Button>
             ) : (
-              <Button onClick={handleSubmit} className="bg-primary text-primary-foreground">Submit Pulse</Button>
+              <Button onClick={handleSubmit} className="bg-primary text-primary-foreground" disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit Pulse"}
+              </Button>
             )}
           </CardFooter>
         </Card>
