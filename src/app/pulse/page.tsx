@@ -35,7 +35,7 @@ export default function PulseCheckPage() {
             <Heart className="h-8 w-8 text-primary" />
           </div>
           <h1 className="font-headline text-3xl font-bold">Quick Pulse Check</h1>
-          <p className="text-muted-foreground mt-2">Help us make GAIL's a better place to work.</p>
+          <p className="text-muted-foreground mt-2">Help us make Provr. a better place to work.</p>
         </div>
 
         <Card className="border-none shadow-xl">
@@ -46,7 +46,7 @@ export default function PulseCheckPage() {
                 <div className="h-full bg-primary" style={{ width: `${(step / 3) * 100}%` }}></div>
               </div>
             </div>
-            {step === 1 && <CardTitle className="font-headline text-xl">How likely are you to recommend GAIL's as a place to work?</CardTitle>}
+            {step === 1 && <CardTitle className="font-headline text-xl">How likely are you to recommend Provr. as a place to work?</CardTitle>}
             {step === 2 && <CardTitle className="font-headline text-xl">How do you feel about your workload this week?</CardTitle>}
             {step === 3 && <CardTitle className="font-headline text-xl">How supported do you feel by your leadership?</CardTitle>}
           </CardHeader>

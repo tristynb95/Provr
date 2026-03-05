@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/layout/Navbar";
 import { PendingRequests } from "@/components/home/PendingRequests";
 import { RequestFeedback } from "@/components/home/RequestFeedback";
@@ -7,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ClipboardCheck, Award } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -16,7 +14,7 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8 md:px-6">
         <header className="mb-10 text-center md:text-left">
           <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-2">Welcome back, Alex!</h1>
-          <p className="text-muted-foreground">Here's a summary of what's happening at Provr Bakery today.</p>
+          <p className="text-muted-foreground">Here's a summary of what's happening at Provr. today.</p>
         </header>
 
         {/* Hero Quick Actions */}

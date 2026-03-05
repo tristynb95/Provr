@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -24,7 +23,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-headline font-bold text-lg">P</div>
-              <span className="font-headline font-bold text-xl tracking-tight hidden sm:block">Provr Pulse</span>
+              <span className="font-headline font-bold text-xl tracking-tight hidden sm:block">Provr.</span>
             </Link>
           </div>
 

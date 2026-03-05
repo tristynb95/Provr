@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const surveyTypes = [
   {
     title: "SPARK Competency",
-    description: "Internal behaviours and attitudes assessment based on GAIL's standards.",
+    description: "Internal behaviours and attitudes assessment based on Provr. standards.",
     icon: Sparkles,
     color: "bg-primary/10 text-primary",
     href: "/surveys/spark"

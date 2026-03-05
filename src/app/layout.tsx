@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Provr Pulse - Feedback Platform',
-  description: 'Internal tool for giving and receiving feedback at GAIL\'s Bakery',
+  title: 'Provr. - Feedback Platform',
+  description: 'Internal tool for giving and receiving feedback at Provr.',
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased selection:bg-primary/20">
+      <body className="font-body antialiased selection:bg-primary/20" suppressHydrationWarning>
         {children}
         <Toaster />
       </body>

@@ -14,7 +14,7 @@ export default function DashboardPage() {
         <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="font-headline text-3xl font-bold tracking-tight mb-2">Your Performance Dashboard</h1>
-            <p className="text-muted-foreground">Tracking your growth at Provr Bakery over time.</p>
+            <p className="text-muted-foreground">Tracking your growth at Provr. over time.</p>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 md:pb-0">
              <Card className="flex items-center gap-3 p-3 border-none shadow-sm min-w-[150px]">
