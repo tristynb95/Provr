@@ -376,11 +376,11 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. Access is strictly private to the authenticated user matching `{userId}`. Includes denormalized 'id' matching the document ID for self-ownership verification.",
+          "description": "Stores individual user profiles.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user, matching 'request.auth.uid'."
+              "description": "The unique identifier of the user."
             }
           ]
         }
@@ -392,7 +392,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Grants global administrator privileges to a user. Access is determined by the existence of a document for 'request.auth.uid' at this path. This collection implements Database Access Control (DBAC).",
+          "description": "Grants global administrator privileges to a user.",
           "params": [
             {
               "name": "adminId",
@@ -408,7 +408,7 @@
           "schema": {
             "$ref": "#/backend/entities/Survey"
           },
-          "description": "Global collection for survey templates. Read-only for all authenticated users. Write access is restricted to administrators.",
+          "description": "Global collection for survey templates.",
           "params": [
             {
               "name": "surveyId",
@@ -424,7 +424,7 @@
           "schema": {
             "$ref": "#/backend/entities/Question"
           },
-          "description": "Questions belonging to a specific survey. Inherits read-only access for all authenticated users and write access for administrators from the parent survey. Includes denormalized 'surveyId' for authorization independence.",
+          "description": "Questions belonging to a specific survey.",
           "params": [
             {
               "name": "surveyId",
@@ -438,13 +438,13 @@
         }
       },
       {
-        "path": "/feedback_requests/{feedbackRequestId}",
+        "path": "/feedbackRequests/{feedbackRequestId}",
         "definition": {
           "entityName": "FeedbackRequest",
           "schema": {
             "$ref": "#/backend/entities/FeedbackRequest"
           },
-          "description": "Stores initiated feedback requests. Accessible by the 'requesterId' (creator) and 'recipientId' (subject). Includes denormalized 'requesterId', 'recipientId', 'surveyId', 'isTeamAnonymous', and 'status' for authorization independence and efficient querying.",
+          "description": "Stores initiated feedback requests.",
           "params": [
             {
               "name": "feedbackRequestId",
@@ -454,13 +454,13 @@
         }
       },
       {
-        "path": "/feedback_responses/{feedbackResponseId}",
+        "path": "/feedbackResponses/{feedbackResponseId}",
         "definition": {
           "entityName": "FeedbackResponse",
           "schema": {
             "$ref": "#/backend/entities/FeedbackResponse"
           },
-          "description": "Stores completed feedback responses. Accessible by the 'responderId' (who gave the feedback) and 'recipientId' (who received the feedback). Includes denormalized 'surveyId', 'feedbackRequestId', 'responderId', 'recipientId', and 'isSelfAssessment' for authorization independence and efficient querying.",
+          "description": "Stores completed feedback responses.",
           "params": [
             {
               "name": "feedbackResponseId",
@@ -470,13 +470,13 @@
         }
       },
       {
-        "path": "/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}",
+        "path": "/feedbackResponses/{feedbackResponseId}/questionResponses/{questionResponseId}",
         "definition": {
           "entityName": "QuestionResponse",
           "schema": {
             "$ref": "#/backend/entities/QuestionResponse"
           },
-          "description": "Stores individual answers within a feedback response. Accessible by the 'responderId' and 'recipientId' (denormalized from the parent 'FeedbackResponse'). Includes denormalized 'feedbackResponseId', 'questionId', 'responderId', and 'recipientId' for authorization independence and efficient querying.",
+          "description": "Stores individual answers within a feedback response.",
           "params": [
             {
               "name": "feedbackResponseId",
@@ -490,13 +490,13 @@
         }
       },
       {
-        "path": "/shower_thoughts/{showerThoughtId}",
+        "path": "/showerThoughts/{showerThoughtId}",
         "definition": {
           "entityName": "ShowerThought",
           "schema": {
             "$ref": "#/backend/entities/ShowerThought"
           },
-          "description": "Free-form thoughts submitted by employees to their managers. Accessible by the 'submitterId' (if not anonymous) and 'managerId'. Includes denormalized 'submitterId', 'managerId', 'isAnonymous', and 'status' for authorization independence and efficient querying.",
+          "description": "Free-form thoughts submitted by employees to their managers.",
           "params": [
             {
               "name": "showerThoughtId",
@@ -505,7 +505,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The recommended Firestore data structure adheres to the core design principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants, as well as the design strategy mandates. This structure aims for simple, robust, and easily debuggable security rules.\n\n**Authorization Independence via Denormalization (Mandate A):**\nTo eliminate the need for `get()` calls in security rules and enable atomic operations, critical authorization fields are denormalized directly into the documents where they are needed. For example:\n*   In `/feedback_requests/{feedbackRequestId}`, `requesterId`, `recipientId`, and `isTeamAnonymous` are present to authorize access by the initiator and the subject of the request without looking up other documents.\n*   In `/feedback_responses/{feedbackResponseId}`, `responderId` and `recipientId` are included to allow the respondent to read their submission and the recipient to read feedback received.\n*   Similarly, `/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}` denormalizes `responderId` and `recipientId` from its parent `FeedbackResponse` to authorize access at the individual question response level.\n*   `/shower_thoughts/{showerThoughtId}` includes `submitterId`, `managerId`, and `isAnonymous` for direct authorization based on ownership and anonymity status.\n\n**Structural Segregation (Mandate B):**\nCollections are designed to have homogeneous security postures:\n*   `/users/{userId}` is strictly private to the authenticated user.\n*   `/app_roles/admins/{adminId}` is a dedicated collection for checking administrator roles (existence-based).\n*   `/surveys/{surveyId}` and its subcollection `/surveys/{surveyId}/questions/{questionId}` are globally readable by all authenticated users, with write access restricted to administrators.\n*   `/feedback_requests/{feedbackRequestId}`, `/feedback_responses/{feedbackResponseId}`, and their subcollection `/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}` are accessible to specific users based on their roles as requester, responder, or recipient, leveraging denormalized IDs.\n*   `/shower_thoughts/{showerThoughtId}` is managed by `submitterId` and `managerId` with specific rules for anonymity.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure and efficient `list` operations by making authorization fields directly queryable. For instance:\n*   A user can list their own feedback requests using `db.collection('feedback_requests').where('requesterId', '==', auth.uid)`. The security rules would permit this `list` if `request.auth.uid` matches `resource.data.requesterId` or `resource.data.recipientId` (for incoming requests).\n*   A manager can list shower thoughts directed at them using `db.collection('shower_thoughts').where('managerId', '==', auth.uid)`. Rules would permit if `request.auth.uid` matches `resource.data.managerId`.\n\nThis design ensures that common list queries needed for dashboards and user-specific views are directly supported by indexes on the denormalized fields, and security rules can validate access without complex, expensive, or insecure filtering logic.\n\n**Note on Next.js Error (Module not found: Can't resolve 'child_process'):**\nThe reported error indicates `firebase-admin` is being imported into a client-side component or module. `firebase-admin` is a Node.js SDK and should *never* be used in a browser environment, as it relies on Node.js-specific modules like `child_process`. To resolve this, you must strictly separate client-side and server-side Firebase code:\n1.  **Client-Side:** Use the `firebase/app`, `firebase/firestore`, etc., client SDKs (e.g., `import { getFirestore } from 'firebase/firestore'`). These are browser-compatible.\n2.  **Server-Side:** Use `firebase-admin` only within Next.js API routes, Server Components, or dedicated backend services (e.g., `src/server/firebase-admin.ts` imported only by server-side files). Do not import any `firebase-admin` related code into files that are eventually bundled for the browser."
+    ]
   }
 }
