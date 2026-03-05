@@ -12,7 +12,8 @@ import {
   Heart, 
   MessageSquare,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -86,8 +87,8 @@ export function Navbar() {
               <Link
                 href="/admin"
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:text-primary text-red-600",
-                  pathname === "/admin" ? "border-b-2 border-primary font-bold" : ""
+                  "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:text-primary text-primary font-bold",
+                  pathname === "/admin" ? "border-b-2 border-primary" : ""
                 )}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -124,6 +125,12 @@ export function Navbar() {
                     <Sparkles className="h-4 w-4" /> Performance
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/surveys" className="flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4" /> Surveys
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4 mr-2" /> Logout
                 </DropdownMenuItem>
@@ -152,21 +159,14 @@ export function Navbar() {
           <Link
             href="/admin"
             className={cn(
-              "flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-red-600",
-              pathname === "/admin" ? "text-primary font-bold" : ""
+              "flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-primary font-bold",
+              pathname === "/admin" ? "text-primary" : ""
             )}
           >
             <ShieldCheck className="h-4 w-4" />
             Admin
           </Link>
         )}
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-destructive"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
       </div>
     </nav>
   );
