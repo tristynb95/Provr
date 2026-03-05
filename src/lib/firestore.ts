@@ -1,7 +1,6 @@
 'use client';
 /**
  * @fileOverview Firestore utility functions for Provr Pulse.
- * Updated to follow non-blocking mutation guidelines and proper error handling.
  */
 import {
   collection,
@@ -134,13 +133,7 @@ export async function seedInitialData(): Promise<void> {
       });
     }
   } catch (err: any) {
-    if (err.code === 'permission-denied') {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        operation: 'list',
-        path: 'sites',
-      }));
-    }
-    throw err;
+    console.error("Seeding error:", err);
   }
 }
 
@@ -149,7 +142,7 @@ export async function seedInitialData(): Promise<void> {
 export function subscribeSites(callback: (sites: Site[]) => void): Unsubscribe {
   return onSnapshot(collection(db, "sites"), (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Site)));
-  }, async (err) => {
+  }, (err) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       operation: 'list',
       path: 'sites',
@@ -174,7 +167,7 @@ export function deleteSite(siteId: string): void {
 export function subscribeUsers(callback: (users: User[]) => void): Unsubscribe {
   return onSnapshot(collection(db, "users"), (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as User)));
-  }, async (err) => {
+  }, (err) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       operation: 'list',
       path: 'users',
@@ -183,22 +176,12 @@ export function subscribeUsers(callback: (users: User[]) => void): Unsubscribe {
 }
 
 export async function getUserByUsername(username: string): Promise<User | null> {
-  try {
-    const snap = await getDocs(
-      query(collection(db, "users"), where("username", "==", username))
-    );
-    if (snap.empty) return null;
-    const d = snap.docs[0];
-    return { id: d.id, ...d.data() } as User;
-  } catch (err: any) {
-    if (err.code === 'permission-denied') {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        operation: 'list',
-        path: 'users',
-      }));
-    }
-    throw err;
-  }
+  const snap = await getDocs(
+    query(collection(db, "users"), where("username", "==", username))
+  );
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() } as User;
 }
 
 export function updateUser(userId: string, data: Partial<Omit<User, "id">>): void {
@@ -206,25 +189,15 @@ export function updateUser(userId: string, data: Partial<Omit<User, "id">>): voi
 }
 
 export async function deleteUsersForSite(siteId: string, preserveSuperAdmins = true): Promise<void> {
-  try {
-    const snap = await getDocs(
-      query(collection(db, "users"), where("siteId", "==", siteId))
-    );
-    for (const d of snap.docs) {
-      const user = d.data() as Omit<User, "id">;
-      if (preserveSuperAdmins && (user.role === "Super Admin" || user.username === "tristenb")) {
-        continue;
-      }
-      deleteDocumentNonBlocking(d.ref);
+  const snap = await getDocs(
+    query(collection(db, "users"), where("siteId", "==", siteId))
+  );
+  for (const d of snap.docs) {
+    const user = d.data() as Omit<User, "id">;
+    if (preserveSuperAdmins && (user.role === "Super Admin" || user.username === "tristenb")) {
+      continue;
     }
-  } catch (err: any) {
-    if (err.code === 'permission-denied') {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        operation: 'list',
-        path: 'users',
-      }));
-    }
-    throw err;
+    deleteDocumentNonBlocking(d.ref);
   }
 }
 
@@ -236,7 +209,7 @@ export function subscribeShowerThoughts(
   const q = query(collection(db, "showerThoughts"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as ShowerThought)));
-  }, async (err) => {
+  }, (err) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       operation: 'list',
       path: 'showerThoughts',
@@ -275,7 +248,7 @@ export function subscribeFeedbackRequests(
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FeedbackRequest)));
-  }, async (err) => {
+  }, (err) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       operation: 'list',
       path: 'feedbackRequests',

@@ -3,19 +3,23 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore';
 
 /**
  * Initializes Firebase App and returns core SDK instances.
- * Prioritizes the explicit configuration object to ensure consistency across environments.
+ * Robust implementation to handle environment inconsistencies in development.
  */
 export function initializeFirebase() {
   let firebaseApp: FirebaseApp;
 
-  if (getApps().length > 0) {
-    firebaseApp = getApp();
+  const apps = getApps();
+  if (apps.length > 0) {
+    firebaseApp = apps[0];
+    // If for some reason the existing app is missing the API key, re-initialize it
+    if (!firebaseApp.options.apiKey && firebaseConfig.apiKey) {
+      firebaseApp = initializeApp(firebaseConfig);
+    }
   } else {
-    // Standard initialization with explicit config is most reliable in preview environments
     firebaseApp = initializeApp(firebaseConfig);
   }
 

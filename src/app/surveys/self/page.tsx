@@ -24,17 +24,24 @@ export default function SelfAssessmentPage() {
   }, [router]);
 
   const handleSubmit = (answers: any) => {
+    if (!user) return;
+
     // Add to feedbackResponses collection
     addDocumentNonBlocking(collection(db, "feedbackResponses"), {
       ...answers,
       surveyId: "general_performance",
-      type: "self_assessment"
+      type: "self_assessment",
+      responderId: user.id,
+      recipientId: user.id,
+      isSelfAssessment: true,
+      status: "COMPLETED",
+      submittedAt: new Date().toISOString()
     });
     
     // Redirect back to overview after a short delay
     setTimeout(() => {
       router.push('/');
-    }, 2000);
+    }, 2500);
   };
 
   if (!user) return <div className="min-h-screen flex items-center justify-center">Loading assessment...</div>;
@@ -54,7 +61,7 @@ export default function SelfAssessmentPage() {
       <Navbar />
       <main className="container mx-auto px-4 py-12 md:px-6">
         <SurveyHeader 
-          title="Self Assessment" 
+          title="Self Assessment: General Performance" 
           subject={surveySubject} 
         />
         <SurveyForm
