@@ -115,12 +115,14 @@ export default function AdminPage() {
 
     // Remove the site
     setSites(sites.filter(s => s.id !== siteToDelete.id));
-    // Remove all users associated with this site (Delete the team)
-    setUsers(users.filter(u => u.siteId !== siteToDelete.id));
+    
+    // Remove all users associated with this site, EXCEPT for Super Admins
+    // This ensures Tristen retains access even if his 'home' site is deleted.
+    setUsers(users.filter(u => u.siteId !== siteToDelete.id || u.role === 'Super Admin' || u.username === 'tristenb'));
 
     toast({ 
-      title: "Site & Team Removed", 
-      description: `The site "${siteToDelete.name}" and all associated staff have been permanently deleted.` 
+      title: "Site Removed", 
+      description: `The site "${siteToDelete.name}" and its associated staff (excluding Super Admins) have been deleted.` 
     });
     
     setIsDeleteDialogOpen(false);
@@ -304,6 +306,7 @@ export default function AdminPage() {
                                 {sites.map(s => (
                                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                 ))}
+                                <SelectItem value="unassigned">Unassigned / Global</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>
@@ -418,7 +421,7 @@ export default function AdminPage() {
                                 size="icon" 
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => initiateDeleteSite(site)}
-                                title="Delete site and entire team"
+                                title="Delete site and associated team"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -474,10 +477,10 @@ export default function AdminPage() {
             </div>
             <AlertDialogDescription className="space-y-4">
               <p className="font-bold text-foreground">
-                You are about to delete the site <span className="underline">"{siteToDelete?.name}"</span> and all associated staff accounts.
+                You are about to delete the site <span className="underline">"{siteToDelete?.name}"</span> and its team.
               </p>
               <p>
-                This action cannot be undone. All data related to this site and its team will be permanently removed from the system.
+                This action cannot be undone. Associated staff accounts will be removed, <span className="font-bold italic">except for Super Admins</span> who retain system access.
               </p>
               <div className="pt-4 space-y-3">
                 <Label htmlFor="delete-confirm" className="text-xs font-bold uppercase text-muted-foreground">
@@ -500,7 +503,7 @@ export default function AdminPage() {
               onClick={handleConfirmDelete}
               disabled={deleteConfirmText !== expectedConfirmText}
             >
-              Permanently Delete Site & Team
+              Confirm Deletion
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
