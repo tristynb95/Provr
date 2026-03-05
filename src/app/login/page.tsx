@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MessageSquareText, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getUserByUsername, seedInitialData } from '@/lib/firestore';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -16,27 +17,56 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Hardcoded authentication for MVP
-    if (username.toLowerCase() === 'tristenb' && pin === '000000') {
-      localStorage.setItem('provr_user', JSON.stringify({ 
-        username: 'tristenb', 
-        name: 'Tristen B.',
-        role: 'admin' 
+    try {
+      // Ensure initial data is seeded on first run
+      await seedInitialData();
+
+      const user = await getUserByUsername(username.toLowerCase().trim());
+
+      if (!user || user.pin !== pin) {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "Invalid username or PIN. Please try again.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (user.status === "Inactive") {
+        toast({
+          variant: "destructive",
+          title: "Account inactive",
+          description: "Your account has been deactivated. Please contact your manager.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem('provr_user', JSON.stringify({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        siteId: user.siteId,
+        email: user.email,
       }));
+
       toast({
-        title: "Welcome back, Admin!",
-        description: "You have successfully logged in as a Super Admin.",
+        title: `Welcome back, ${user.name.split(' ')[0]}!`,
+        description: `Signed in as ${user.role}.`,
       });
       router.push('/');
-    } else {
+    } catch (err) {
+      console.error(err);
       toast({
         variant: "destructive",
-        title: "Login failed",
-        description: "Invalid username or PIN. Please try again.",
+        title: "Connection error",
+        description: "Could not reach the server. Please try again.",
       });
       setLoading(false);
     }
