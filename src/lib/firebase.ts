@@ -1,7 +1,10 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import serviceAccount from '../../service-account.json';
+'use client';
+/**
+ * @fileOverview Client-side Firebase initialization.
+ * Replaces the incorrect server-side firebase-admin import that was causing build errors.
+ */
+import { initializeFirebase } from '@/firebase';
 
-const app = getApps().length === 0 ? initializeApp({ credential: cert(serviceAccount) }) : getApps()[0];
+const { firestore } = initializeFirebase();
 
-export const db = getFirestore(app);
+export const db = firestore;

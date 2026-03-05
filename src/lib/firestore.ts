@@ -1,12 +1,12 @@
+'use client';
+/**
+ * @fileOverview Firestore utility functions for Provr Pulse.
+ * Updated to follow non-blocking mutation guidelines and proper error handling.
+ */
 import {
   collection,
   doc,
   getDocs,
-  getDoc,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -15,6 +15,12 @@ import {
   Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import {
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+  setDocumentNonBlocking,
+} from "@/firebase/non-blocking-updates";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -89,27 +95,25 @@ const SEED_SHOWER_THOUGHTS = [
 ];
 
 export async function seedInitialData(): Promise<void> {
-  // Check if sites already exist
   const sitesSnap = await getDocs(collection(db, "sites"));
-  if (!sitesSnap.empty) return; // Already seeded
+  if (!sitesSnap.empty) return;
 
-  // Create sites and capture their IDs
   const siteIds: Record<string, string> = {};
   for (const site of SEED_SITES) {
-    const ref = await addDoc(collection(db, "sites"), site);
-    siteIds[site.name] = ref.id;
+    const colRef = collection(db, "sites");
+    const newDocRef = doc(colRef);
+    setDocumentNonBlocking(newDocRef, site, { merge: true });
+    siteIds[site.name] = newDocRef.id;
   }
 
-  // Create users using their site IDs
   for (const user of SEED_USERS) {
     const { siteName, ...userData } = user;
-    await addDoc(collection(db, "users"), {
+    addDocumentNonBlocking(collection(db, "users"), {
       ...userData,
       siteId: siteIds[siteName] ?? "unassigned",
     });
   }
 
-  // Seed shower thoughts as anonymous from tristenb
   const tristenbSnap = await getDocs(
     query(collection(db, "users"), where("username", "==", "tristenb"))
   );
@@ -117,7 +121,7 @@ export async function seedInitialData(): Promise<void> {
   const eastEndId = siteIds["East End Pastries"] ?? "unassigned";
 
   for (const text of SEED_SHOWER_THOUGHTS) {
-    await addDoc(collection(db, "showerThoughts"), {
+    addDocumentNonBlocking(collection(db, "showerThoughts"), {
       text,
       anonymous: true,
       authorUsername: "anonymous",
@@ -136,17 +140,16 @@ export function subscribeSites(callback: (sites: Site[]) => void): Unsubscribe {
   });
 }
 
-export async function updateSite(siteId: string, data: Partial<Omit<Site, "id">>): Promise<void> {
-  await updateDoc(doc(db, "sites", siteId), data);
+export function updateSite(siteId: string, data: Partial<Omit<Site, "id">>): void {
+  updateDocumentNonBlocking(doc(db, "sites", siteId), data);
 }
 
-export async function addSite(data: Omit<Site, "id">): Promise<string> {
-  const ref = await addDoc(collection(db, "sites"), data);
-  return ref.id;
+export function addSite(data: Omit<Site, "id">): void {
+  addDocumentNonBlocking(collection(db, "sites"), data);
 }
 
-export async function deleteSite(siteId: string): Promise<void> {
-  await deleteDoc(doc(db, "sites", siteId));
+export function deleteSite(siteId: string): void {
+  deleteDocumentNonBlocking(doc(db, "sites", siteId));
 }
 
 // ── Users ──────────────────────────────────────────────────────────────────
@@ -166,8 +169,8 @@ export async function getUserByUsername(username: string): Promise<User | null> 
   return { id: d.id, ...d.data() } as User;
 }
 
-export async function updateUser(userId: string, data: Partial<Omit<User, "id">>): Promise<void> {
-  await updateDoc(doc(db, "users", userId), data);
+export function updateUser(userId: string, data: Partial<Omit<User, "id">>): void {
+  updateDocumentNonBlocking(doc(db, "users", userId), data);
 }
 
 export async function deleteUsersForSite(siteId: string, preserveSuperAdmins = true): Promise<void> {
@@ -179,7 +182,7 @@ export async function deleteUsersForSite(siteId: string, preserveSuperAdmins = t
     if (preserveSuperAdmins && (user.role === "Super Admin" || user.username === "tristenb")) {
       continue;
     }
-    await deleteDoc(d.ref);
+    deleteDocumentNonBlocking(d.ref);
   }
 }
 
@@ -194,10 +197,10 @@ export function subscribeShowerThoughts(
   });
 }
 
-export async function addShowerThought(
+export function addShowerThought(
   data: Omit<ShowerThought, "id" | "createdAt">
-): Promise<void> {
-  await addDoc(collection(db, "showerThoughts"), {
+): void {
+  addDocumentNonBlocking(collection(db, "showerThoughts"), {
     ...data,
     createdAt: serverTimestamp(),
   });
@@ -205,8 +208,8 @@ export async function addShowerThought(
 
 // ── Pulse Responses ────────────────────────────────────────────────────────
 
-export async function addPulseResponse(data: Omit<PulseResponse, "id" | "createdAt">): Promise<void> {
-  await addDoc(collection(db, "pulseResponses"), {
+export function addPulseResponse(data: Omit<PulseResponse, "id" | "createdAt">): void {
+  addDocumentNonBlocking(collection(db, "pulseResponses"), {
     ...data,
     createdAt: serverTimestamp(),
   });
@@ -228,14 +231,14 @@ export function subscribeFeedbackRequests(
   });
 }
 
-export async function addFeedbackRequest(data: {
+export function addFeedbackRequest(data: {
   fromUsername: string;
   fromName: string;
   toUsername: string;
   toName: string;
   surveyType: string;
-}): Promise<void> {
-  await addDoc(collection(db, "feedbackRequests"), {
+}): void {
+  addDocumentNonBlocking(collection(db, "feedbackRequests"), {
     ...data,
     status: "pending",
     createdAt: serverTimestamp(),
