@@ -22,10 +22,14 @@ export default function LoginPage() {
 
     // Hardcoded authentication for MVP
     if (username.toLowerCase() === 'tristenb' && pin === '000000') {
-      localStorage.setItem('provr_user', JSON.stringify({ username: 'tristenb', name: 'Tristen B.' }));
+      localStorage.setItem('provr_user', JSON.stringify({ 
+        username: 'tristenb', 
+        name: 'Tristen B.',
+        role: 'admin' 
+      }));
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in to Provr.",
+        title: "Welcome back, Admin!",
+        description: "You have successfully logged in as a Super Admin.",
       });
       router.push('/');
     } else {
@@ -47,7 +51,7 @@ export default function LoginPage() {
               <MessageSquareText className="h-7 w-7 fill-current" />
             </div>
           </div>
-          <CardTitle className="font-headline text-3xl font-bold tracking-tight">Provr.</CardTitle>
+          <CardTitle className="font-headline text-3xl font-bold tracking-tight text-foreground">Provr.</CardTitle>
           <CardDescription>Enter your username and 6-digit PIN</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>

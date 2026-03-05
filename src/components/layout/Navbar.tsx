@@ -11,7 +11,8 @@ import {
   MessageSquareText, 
   Heart, 
   MessageSquare,
-  LogOut 
+  LogOut,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,7 +35,7 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; username: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; username: string; role?: string } | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('provr_user');
@@ -51,6 +52,8 @@ export function Navbar() {
   };
 
   if (pathname === '/login') return null;
+
+  const isAdmin = user?.role === 'admin';
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -79,6 +82,18 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors hover:text-primary text-red-600",
+                  pathname === "/admin" ? "border-b-2 border-primary font-bold" : ""
+                )}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -94,6 +109,16 @@ export function Navbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="flex items-center gap-2 text-primary font-bold">
+                        <ShieldCheck className="h-4 w-4" /> Admin Controls
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" /> Performance
@@ -123,6 +148,18 @@ export function Navbar() {
             {item.label}
           </Link>
         ))}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-red-600",
+              pathname === "/admin" ? "text-primary font-bold" : ""
+            )}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Admin
+          </Link>
+        )}
         <button
           onClick={handleLogout}
           className="flex flex-col items-center gap-1 px-4 py-1 text-[10px] font-medium transition-colors text-destructive"
