@@ -1,19 +1,32 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PendingRequests } from "@/components/home/PendingRequests";
 import { RequestFeedback } from "@/components/home/RequestFeedback";
 import { ShowerThoughtQuick } from "@/components/home/ShowerThoughtQuick";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardCheck, Award, MessageSquare } from "lucide-react";
+import { ClipboardCheck, Award } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
+  const [userName, setUserName] = useState("there");
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('provr_user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setUserName(user.name.split(' ')[0]);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8 md:px-6">
         <header className="mb-10 text-center md:text-left">
-          <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-2">Welcome back, Alex!</h1>
+          <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight mb-2">Welcome back, {userName}!</h1>
           <p className="text-muted-foreground">Here's a summary of what's happening at Provr. today.</p>
         </header>
 
