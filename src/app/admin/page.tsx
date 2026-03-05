@@ -11,14 +11,14 @@ import {
   Settings, 
   Activity, 
   Database, 
-  MessageSquare,
-  AlertTriangle,
-  FileText,
   MapPin,
   Plus,
   Trash2,
   UserCog,
-  Building
+  Building,
+  Filter,
+  Lock,
+  User as UserIcon
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +34,10 @@ const INITIAL_SITES = [
 ];
 
 const INITIAL_USERS = [
-  { id: "u1", name: "Tristen B.", role: "Super Admin", siteId: "s3", status: "Active", email: "tristen@provr.com" },
-  { id: "u2", name: "Sarah Miller", role: "Head Baker", siteId: "s2", status: "Active", email: "sarah@provr.com" },
-  { id: "u3", name: "Alex Baker", role: "Barista", siteId: "s1", status: "On Shift", email: "alex@provr.com" },
-  { id: "u4", name: "Jack Thompson", role: "Store Manager", siteId: "s1", status: "Away", email: "jack@provr.com" },
+  { id: "u1", name: "Tristen Bayley", username: "tristenb", pin: "000000", role: "Super Admin", siteId: "s3", status: "Active", email: "tristen@provr.com" },
+  { id: "u2", name: "Sarah Miller", username: "sarahm", pin: "123456", role: "Head Baker", siteId: "s2", status: "Active", email: "sarah@provr.com" },
+  { id: "u3", name: "Alex Baker", username: "alexb", pin: "111111", role: "Barista", siteId: "s1", status: "On Shift", email: "alex@provr.com" },
+  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Store Manager", siteId: "s1", status: "Away", email: "jack@provr.com" },
 ];
 
 const ROLES = ["Barista", "Head Baker", "Store Manager", "Shift Lead", "Super Admin"];
@@ -48,6 +48,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [sites, setSites] = useState(INITIAL_SITES);
   const [users, setUsers] = useState(INITIAL_USERS);
+  const [filterSite, setFilterSite] = useState("all");
 
   useEffect(() => {
     const storedUser = localStorage.getItem('provr_user');
@@ -70,15 +71,16 @@ export default function AdminPage() {
     toast({ title: "Site removed", description: "The location has been deleted from the registry." });
   };
 
-  const updateUserRole = (userId: string, newRole: string) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    toast({ title: "Role updated", description: "Staff permissions have been modified." });
+  const updateUserField = (userId: string, field: string, value: string) => {
+    setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u));
+    if (field === 'role' || field === 'siteId') {
+      toast({ title: "Staff updated", description: `Updated ${field} for member.` });
+    }
   };
 
-  const updateUserSite = (userId: string, newSiteId: string) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, siteId: newSiteId } : u));
-    toast({ title: "Site reassigned", description: "Staff member moved to new location." });
-  };
+  const filteredUsers = filterSite === "all" 
+    ? users 
+    : users.filter(u => u.siteId === filterSite);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Verifying credentials...</div>;
@@ -91,9 +93,9 @@ export default function AdminPage() {
         <header className="mb-10">
           <div className="flex items-center gap-3 mb-2">
             <ShieldAlert className="h-8 w-8 text-primary" />
-            <h1 className="font-headline text-3xl font-bold tracking-tight">Admin Control Center</h1>
+            <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">Admin Control Center</h1>
           </div>
-          <p className="text-muted-foreground">Manage sites, staff roles, and system-wide settings.</p>
+          <p className="text-muted-foreground">Manage sites, staff credentials, and system configuration.</p>
         </header>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
@@ -129,11 +131,27 @@ export default function AdminPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <CardTitle className="font-headline">Employee Registry</CardTitle>
-                    <CardDescription>Assign roles and sites to your team members</CardDescription>
+                    <CardDescription>Manage staff accounts, site assignments, and security PINs</CardDescription>
                   </div>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" /> Add Staff Member
-                  </Button>
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <Select value={filterSite} onValueChange={setFilterSite}>
+                        <SelectTrigger className="w-[180px] bg-background">
+                          <SelectValue placeholder="Filter by Site" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sites</SelectItem>
+                          {sites.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> Add Staff
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -141,25 +159,52 @@ export default function AdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Staff Member</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>PIN</TableHead>
                       <TableHead>Assigned Site</TableHead>
-                      <TableHead>Professional Role</TableHead>
+                      <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
-                          <div>{user.name}</div>
+                          <div className="font-bold">{user.name}</div>
                           <div className="text-[10px] text-muted-foreground">{user.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative">
+                            <UserIcon className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                            <Input 
+                              value={user.username} 
+                              onChange={(e) => updateUserField(user.id, 'username', e.target.value)}
+                              className="h-8 pl-7 text-xs w-[120px]"
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative">
+                            <Lock className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                            <Input 
+                              value={user.pin} 
+                              type="password"
+                              maxLength={6}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                if (val.length <= 6) updateUserField(user.id, 'pin', val);
+                              }}
+                              className="h-8 pl-7 text-xs w-[80px] font-mono"
+                            />
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Select 
                             defaultValue={user.siteId} 
-                            onValueChange={(val) => updateUserSite(user.id, val)}
+                            onValueChange={(val) => updateUserField(user.id, 'siteId', val)}
                           >
-                            <SelectTrigger className="h-8 w-[160px] bg-background">
+                            <SelectTrigger className="h-8 w-[160px] bg-background text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -172,9 +217,9 @@ export default function AdminPage() {
                         <TableCell>
                           <Select 
                             defaultValue={user.role} 
-                            onValueChange={(val) => updateUserRole(user.id, val)}
+                            onValueChange={(val) => updateUserField(user.id, 'role', val)}
                           >
-                            <SelectTrigger className="h-8 w-[140px] bg-background">
+                            <SelectTrigger className="h-8 w-[140px] bg-background text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -185,19 +230,24 @@ export default function AdminPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.status === "Active" || user.status === "On Shift" ? "default" : "secondary"}>
+                          <Badge variant={user.status === "Active" || user.status === "On Shift" ? "default" : "secondary"} className="text-[10px]">
                             {user.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
-                            <Settings className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Settings className="h-3 w-3" />
                           </Button>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                {filteredUsers.length === 0 && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    No staff found at this location.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -231,26 +281,26 @@ export default function AdminPage() {
                       <TableRow key={site.id}>
                         <TableCell className="font-bold">{site.name}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground">
+                          <div className="flex items-center gap-1 text-muted-foreground text-xs">
                             <MapPin className="h-3 w-3" />
                             {site.location}
                           </div>
                         </TableCell>
-                        <TableCell>{site.manager}</TableCell>
+                        <TableCell className="text-xs">{site.manager}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-[10px]">
                             {users.filter(u => u.siteId === site.id).length} Staff
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Settings className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Settings className="h-3 w-3" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => handleDeleteSite(site.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -266,49 +316,27 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
 
-        <section className="mt-12 grid gap-6 md:grid-cols-3">
-          <Card className="border-none shadow-xl">
+        <section className="mt-12">
+          <Card className="border-none shadow-xl bg-foreground text-background">
             <CardHeader>
-              <CardTitle className="font-headline text-lg">System Alerts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-3 p-3 rounded-lg bg-orange-50 border border-orange-100 text-orange-800">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold">API Rate Limit</p>
-                  <p className="text-xs">Genkit flows approaching tier limits.</p>
-                </div>
-              </div>
-              <div className="flex gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100 text-blue-800">
-                <Settings className="h-5 w-5 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold">New Version Available</p>
-                  <p className="text-xs">v2.4.0 is ready for deployment.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-xl bg-foreground text-background md:col-span-2">
-            <CardHeader>
-              <CardTitle className="font-headline text-lg text-white">Advanced Configuration</CardTitle>
-              <CardDescription className="text-muted-foreground">Dangerous operations and maintenance tools.</CardDescription>
+              <CardTitle className="font-headline text-lg text-white">System Maintenance</CardTitle>
+              <CardDescription className="text-muted-foreground">Advanced configuration and diagnostic tools.</CardDescription>
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <FileText className="mr-2 h-4 w-4" /> Export All Data (CSV/JSON)
+                  <UserCog className="mr-2 h-4 w-4" /> Global Permissions Reset
                 </Button>
                 <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <Activity className="mr-2 h-4 w-4" /> View Full Audit Logs
+                  <Activity className="mr-2 h-4 w-4" /> System Audit Logs
                 </Button>
               </div>
               <div className="space-y-2">
                 <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <UserCog className="mr-2 h-4 w-4" /> Global Permissions Reset
+                  <Database className="mr-2 h-4 w-4" /> Export System Data
                 </Button>
                 <Button variant="destructive" className="w-full justify-start">
-                  <Settings className="mr-2 h-4 w-4" /> Enter Maintenance Mode
+                  <ShieldAlert className="mr-2 h-4 w-4" /> Enter Maintenance Mode
                 </Button>
               </div>
             </CardContent>
