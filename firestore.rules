@@ -19,6 +19,7 @@ service cloud.firestore {
      * - /feedback_requests & /feedback_responses: Peer-to-peer and assessment data secured by 
      *   verifying the user is either the requester, responder, or recipient.
      * - /shower_thoughts: Private communication channel between employees and managers.
+     * - /sites: Global site directory.
      *
      * KEY SECURITY DECISIONS:
      * 1. Global Admin Role: Administrators are defined by the existence of their UID in 
@@ -64,13 +65,10 @@ service cloud.firestore {
     /**
      * @description Rules for user profiles. Only the user themselves can manage their data.
      * @path /users/{userId}
-     * @allow (create) if auth.uid == 'user_123' and data.id == 'user_123'
-     * @deny (read) if auth.uid != userId
-     * @principle Ownership: Restricts access to a user's own data tree.
+     * @allow (get/list) if true (Temporarily allow unauthenticated read for custom login lookup)
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow get, list: if true; 
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == userId;
       allow delete: if isExistingOwner(userId);
@@ -78,10 +76,6 @@ service cloud.firestore {
 
     /**
      * @description Rules for global admin roles. Read-only for admins; write is restricted (manual/backend setup).
-     * @path /app_roles/admins/{adminId}
-     * @allow (get) if auth.uid == adminId
-     * @deny (create) if true (Admin roles should be assigned via backend processes)
-     * @principle Roles: Implements existence-based Database Access Control.
      */
     match /app_roles/admins/{adminId} {
       allow get: if isSignedIn();
@@ -90,23 +84,20 @@ service cloud.firestore {
     }
 
     /**
-     * @description Global survey templates. Authenticated users can browse; only admins can manage.
-     * @path /surveys/{surveyId}
-     * @allow (list) if auth.uid is not null
-     * @deny (update) if auth.uid is not an admin
-     * @principle Public Read with Admin-Only Writes.
+     * @description Global bakery sites.
+     */
+    match /sites/{siteId} {
+      allow read: if true; // Allow reading site info for login/seeding
+      allow write: if isAdmin();
+    }
+
+    /**
+     * @description Global survey templates.
      */
     match /surveys/{surveyId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
 
-      /**
-       * @description Questions within a survey. Inherits permissions from the parent survey.
-       * @path /surveys/{surveyId}/questions/{questionId}
-       * @allow (get) if auth.uid is not null
-       * @deny (delete) if auth.uid is not an admin
-       * @principle Hierarchical inheritance with admin-only management.
-       */
       match /questions/{questionId} {
         allow get, list: if isSignedIn();
         allow create, update, delete: if isAdmin();
@@ -114,11 +105,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Feedback requests. Accessible by the initiator or the person being asked for feedback.
-     * @path /feedback_requests/{feedbackRequestId}
-     * @allow (create) if auth.uid == data.requesterId
-     * @deny (get) if auth.uid is not requesterId or recipientId
-     * @principle Shared Access: Validates involvement using denormalized IDs.
+     * @description Feedback requests.
      */
     match /feedback_requests/{feedbackRequestId} {
       allow get: if isSignedIn() && (isOwner(resource.data.requesterId) || isOwner(resource.data.recipientId));
@@ -129,11 +116,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Completed feedback responses. Accessible by the responder and the recipient.
-     * @path /feedback_responses/{feedbackResponseId}
-     * @allow (get) if auth.uid == responderId
-     * @deny (update) if auth.uid != responderId
-     * @principle Shared Access: Ensures only parties involved can access results.
+     * @description Completed feedback responses.
      */
     match /feedback_responses/{feedbackResponseId} {
       allow get: if isSignedIn() && (isOwner(resource.data.responderId) || isOwner(resource.data.recipientId));
@@ -142,12 +125,6 @@ service cloud.firestore {
       allow update: if isExistingOwner(resource.data.responderId);
       allow delete: if isExistingOwner(resource.data.responderId);
 
-      /**
-       * @description Answers within a response. Uses denormalized IDs from the parent logic.
-       * @path /feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}
-       * @allow (create) if auth.uid == responderId
-       * @principle Relational Integrity: Uses denormalized data to maintain flat authorization.
-       */
       match /question_responses/{questionResponseId} {
         allow get: if isSignedIn() && (isOwner(resource.data.responderId) || isOwner(resource.data.recipientId));
         allow list: if isSignedIn();
@@ -158,11 +135,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Shower thoughts submitted to managers. Private between submitter and manager.
-     * @path /shower_thoughts/{showerThoughtId}
-     * @allow (get) if auth.uid == managerId
-     * @deny (create) if auth.uid != submitterId
-     * @principle Shared Access: Manages private communication channel security.
+     * @description Shower thoughts.
      */
     match /shower_thoughts/{showerThoughtId} {
       allow get: if isSignedIn() && isThoughtParticipant(resource.data);
