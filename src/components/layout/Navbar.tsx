@@ -36,7 +36,7 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; username: string; role?: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; username: string; role?: string; siteId?: string } | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('provr_user');
@@ -54,7 +54,7 @@ export function Navbar() {
 
   if (pathname === '/login') return null;
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'Super Admin' || user?.role === 'Bakery Manager';
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">

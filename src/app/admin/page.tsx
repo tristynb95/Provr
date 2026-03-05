@@ -35,18 +35,19 @@ const INITIAL_SITES = [
 
 const INITIAL_USERS = [
   { id: "u1", name: "Tristen Bayley", username: "tristenb", pin: "000000", role: "Super Admin", siteId: "s3", status: "Active", email: "tristen@provr.com" },
-  { id: "u2", name: "Sarah Miller", username: "sarahm", pin: "123456", role: "Head Baker", siteId: "s2", status: "Active", email: "sarah@provr.com" },
+  { id: "u2", name: "Sarah Miller", username: "sarahm", pin: "123456", role: "Bakery Manager", siteId: "s2", status: "Active", email: "sarah@provr.com" },
   { id: "u3", name: "Alex Baker", username: "alexb", pin: "111111", role: "Barista", siteId: "s1", status: "Active", email: "alex@provr.com" },
-  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Store Manager", siteId: "s1", status: "Inactive", email: "jack@provr.com" },
+  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Bakery Manager", siteId: "s1", status: "Inactive", email: "jack@provr.com" },
 ];
 
-const ROLES = ["Barista", "Head Baker", "Store Manager", "Shift Lead", "Super Admin"];
+const ROLES = ["Barista", "Head Baker", "Bakery Manager", "Shift Lead", "Super Admin"];
 const STATUSES = ["Active", "Inactive"];
 
 export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [sites, setSites] = useState(INITIAL_SITES);
   const [users, setUsers] = useState(INITIAL_USERS);
   const [filterSite, setFilterSite] = useState("all");
@@ -59,28 +60,45 @@ export default function AdminPage() {
     }
     
     const user = JSON.parse(storedUser);
-    if (user.role !== 'admin') {
+    const adminRoles = ['Super Admin', 'Bakery Manager', 'admin']; // 'admin' is for hardcoded tristenb login
+    
+    // Check if user is Tristen (Super Admin) or a Bakery Manager
+    const hasAdminAccess = user.role === 'admin' || user.role === 'Super Admin' || user.role === 'Bakery Manager';
+    
+    if (!hasAdminAccess) {
       router.push('/');
       return;
+    }
+    
+    setCurrentUser(user);
+    // If Bakery Manager, lock filter to their site
+    if (user.role === 'Bakery Manager' && user.siteId) {
+      setFilterSite(user.siteId);
     }
     
     setLoading(false);
   }, [router]);
 
   const handleDeleteSite = (id: string) => {
+    if (currentUser?.role === 'Bakery Manager') {
+      toast({ variant: "destructive", title: "Access Denied", description: "Only Super Admins can manage sites." });
+      return;
+    }
     setSites(sites.filter(s => s.id !== id));
     toast({ title: "Site removed", description: "The location has been deleted from the registry." });
   };
 
   const updateUserField = (userId: string, field: string, value: string) => {
-    // Prevent changing status for tristenb
     const targetUser = users.find(u => u.id === userId);
+    
+    // Restrictions
     if (targetUser?.username === 'tristenb' && field === 'status') {
-      toast({ 
-        variant: "destructive",
-        title: "Action Restricted", 
-        description: "The Super Admin account must remain active." 
-      });
+      toast({ variant: "destructive", title: "Action Restricted", description: "The Super Admin account must remain active." });
+      return;
+    }
+
+    if (currentUser?.role === 'Bakery Manager' && targetUser?.siteId !== currentUser.siteId) {
+      toast({ variant: "destructive", title: "Access Denied", description: "You can only manage staff at your site." });
       return;
     }
 
@@ -88,9 +106,20 @@ export default function AdminPage() {
     toast({ title: "Staff updated", description: `Updated ${field} for member.` });
   };
 
-  const filteredUsers = filterSite === "all" 
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'Super Admin';
+  const isBakeryManager = currentUser?.role === 'Bakery Manager';
+
+  const visibleUsers = isSuperAdmin 
     ? users 
-    : users.filter(u => u.siteId === filterSite);
+    : users.filter(u => u.siteId === currentUser?.siteId);
+
+  const filteredUsers = filterSite === "all" 
+    ? visibleUsers 
+    : visibleUsers.filter(u => u.siteId === filterSite);
+
+  const visibleSites = isSuperAdmin 
+    ? sites 
+    : sites.filter(s => s.id === currentUser?.siteId);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Verifying credentials...</div>;
@@ -103,15 +132,21 @@ export default function AdminPage() {
         <header className="mb-10">
           <div className="flex items-center gap-3 mb-2">
             <ShieldAlert className="h-8 w-8 text-primary" />
-            <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">Admin Control Center</h1>
+            <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
+              {isSuperAdmin ? "Global Control Center" : `Site Management: ${visibleSites[0]?.name}`}
+            </h1>
           </div>
-          <p className="text-muted-foreground">Manage sites, staff credentials, and system configuration.</p>
+          <p className="text-muted-foreground">
+            {isSuperAdmin 
+              ? "Manage all bakery sites, staff credentials, and system configuration." 
+              : "Manage staff accounts and credentials for your specific location."}
+          </p>
         </header>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
           {[
-            { label: "Active Users", value: users.filter(u => u.status === "Active").length.toString(), icon: Users, color: "text-blue-500" },
-            { label: "Bakery Sites", value: sites.length.toString(), icon: Building, color: "text-purple-500" },
+            { label: "Active Users", value: visibleUsers.filter(u => u.status === "Active").length.toString(), icon: Users, color: "text-blue-500" },
+            { label: isSuperAdmin ? "Bakery Sites" : "Current Site", value: visibleSites.length.toString(), icon: Building, color: "text-purple-500" },
             { label: "System Health", value: "Optimal", icon: Activity, color: "text-primary" },
             { label: "Storage Used", value: "14%", icon: Database, color: "text-orange-500" },
           ].map((stat, i) => (
@@ -132,7 +167,7 @@ export default function AdminPage() {
         <Tabs defaultValue="staff" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
             <TabsTrigger value="staff">Staff Management</TabsTrigger>
-            <TabsTrigger value="sites">Site Management</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="sites">Site Management</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="staff">
@@ -141,23 +176,29 @@ export default function AdminPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <CardTitle className="font-headline">Employee Registry</CardTitle>
-                    <CardDescription>Manage staff accounts, site assignments, and security PINs</CardDescription>
+                    <CardDescription>
+                      {isSuperAdmin 
+                        ? "Manage all staff across the organization" 
+                        : `Manage staff for ${visibleSites[0]?.name}`}
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted-foreground" />
-                      <Select value={filterSite} onValueChange={setFilterSite}>
-                        <SelectTrigger className="w-[180px] bg-background">
-                          <SelectValue placeholder="Filter by Site" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Sites</SelectItem>
-                          {sites.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {isSuperAdmin && (
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <Select value={filterSite} onValueChange={setFilterSite}>
+                          <SelectTrigger className="w-[180px] bg-background">
+                            <SelectValue placeholder="Filter by Site" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Sites</SelectItem>
+                            {sites.map(s => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <Button size="sm">
                       <Plus className="mr-2 h-4 w-4" /> Add Staff
                     </Button>
@@ -171,7 +212,7 @@ export default function AdminPage() {
                       <TableHead>Staff Member</TableHead>
                       <TableHead>Username</TableHead>
                       <TableHead>PIN</TableHead>
-                      <TableHead>Assigned Site</TableHead>
+                      {isSuperAdmin && <TableHead>Assigned Site</TableHead>}
                       <TableHead>Role</TableHead>
                       <TableHead>Account Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -209,24 +250,27 @@ export default function AdminPage() {
                             />
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Select 
-                            defaultValue={user.siteId} 
-                            onValueChange={(val) => updateUserField(user.id, 'siteId', val)}
-                          >
-                            <SelectTrigger className="h-8 w-[160px] bg-background text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sites.map(s => (
-                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
+                        {isSuperAdmin && (
+                          <TableCell>
+                            <Select 
+                              defaultValue={user.siteId} 
+                              onValueChange={(val) => updateUserField(user.id, 'siteId', val)}
+                            >
+                              <SelectTrigger className="h-8 w-[160px] bg-background text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sites.map(s => (
+                                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Select 
                             defaultValue={user.role} 
+                            disabled={user.username === 'tristenb'}
                             onValueChange={(val) => updateUserField(user.id, 'role', val)}
                           >
                             <SelectTrigger className="h-8 w-[140px] bg-background text-xs">
@@ -270,103 +314,107 @@ export default function AdminPage() {
                 </Table>
                 {filteredUsers.length === 0 && (
                   <div className="py-12 text-center text-muted-foreground">
-                    No staff found at this location.
+                    No staff found in this view.
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="sites">
-            <Card className="border-none shadow-xl overflow-hidden">
-              <CardHeader className="bg-muted/30">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <CardTitle className="font-headline">Site Registry</CardTitle>
-                    <CardDescription>Manage your bakery and cafe locations</CardDescription>
+          {isSuperAdmin && (
+            <TabsContent value="sites">
+              <Card className="border-none shadow-xl overflow-hidden">
+                <CardHeader className="bg-muted/30">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                      <CardTitle className="font-headline">Site Registry</CardTitle>
+                      <CardDescription>Manage all bakery and cafe locations</CardDescription>
+                    </div>
+                    <Button size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> Add New Site
+                    </Button>
                   </div>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" /> Add New Site
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Bakery Name</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Primary Manager</TableHead>
-                      <TableHead>Staff Count</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sites.map((site) => (
-                      <TableRow key={site.id}>
-                        <TableCell className="font-bold">{site.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                            <MapPin className="h-3 w-3" />
-                            {site.location}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">{site.manager}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-[10px]">
-                            {users.filter(u => u.siteId === site.id).length} Staff
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Settings className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteSite(site.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Bakery Name</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Primary Manager</TableHead>
+                        <TableHead>Staff Count</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </TableHeader>
+                    <TableBody>
+                      {sites.map((site) => (
+                        <TableRow key={site.id}>
+                          <TableCell className="font-bold">{site.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                              <MapPin className="h-3 w-3" />
+                              {site.location}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs">{site.manager}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[10px]">
+                              {users.filter(u => u.siteId === site.id).length} Staff
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Settings className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteSite(site.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
 
-        <section className="mt-12">
-          <Card className="border-none shadow-xl bg-foreground text-background">
-            <CardHeader>
-              <CardTitle className="font-headline text-lg text-white">System Maintenance</CardTitle>
-              <CardDescription className="text-muted-foreground">Advanced configuration and diagnostic tools.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <UserCog className="mr-2 h-4 w-4" /> Global Permissions Reset
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <Activity className="mr-2 h-4 w-4" /> System Audit Logs
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
-                  <Database className="mr-2 h-4 w-4" /> Export System Data
-                </Button>
-                <Button variant="destructive" className="w-full justify-start">
-                  <ShieldAlert className="mr-2 h-4 w-4" /> Enter Maintenance Mode
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        {isSuperAdmin && (
+          <section className="mt-12">
+            <Card className="border-none shadow-xl bg-foreground text-background">
+              <CardHeader>
+                <CardTitle className="font-headline text-lg text-white">System Maintenance</CardTitle>
+                <CardDescription className="text-muted-foreground">Advanced configuration and diagnostic tools.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
+                    <UserCog className="mr-2 h-4 w-4" /> Global Permissions Reset
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
+                    <Activity className="mr-2 h-4 w-4" /> System Audit Logs
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start border-white/10 text-white hover:bg-white/10">
+                    <Database className="mr-2 h-4 w-4" /> Export System Data
+                  </Button>
+                  <Button variant="destructive" className="w-full justify-start">
+                    <ShieldAlert className="mr-2 h-4 w-4" /> Enter Maintenance Mode
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
       </main>
     </div>
   );
