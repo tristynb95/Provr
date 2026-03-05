@@ -18,7 +18,8 @@ import {
   Building,
   Filter,
   Lock,
-  User as UserIcon
+  User as UserIcon,
+  Map as MapIcon
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -60,9 +61,6 @@ export default function AdminPage() {
     }
     
     const user = JSON.parse(storedUser);
-    const adminRoles = ['Super Admin', 'Bakery Manager', 'admin']; // 'admin' is for hardcoded tristenb login
-    
-    // Check if user is Tristen (Super Admin) or a Bakery Manager
     const hasAdminAccess = user.role === 'admin' || user.role === 'Super Admin' || user.role === 'Bakery Manager';
     
     if (!hasAdminAccess) {
@@ -71,7 +69,6 @@ export default function AdminPage() {
     }
     
     setCurrentUser(user);
-    // If Bakery Manager, lock filter to their site
     if (user.role === 'Bakery Manager' && user.siteId) {
       setFilterSite(user.siteId);
     }
@@ -79,35 +76,49 @@ export default function AdminPage() {
     setLoading(false);
   }, [router]);
 
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'Super Admin';
+  const isBakeryManager = currentUser?.role === 'Bakery Manager';
+
   const handleDeleteSite = (id: string) => {
-    if (currentUser?.role === 'Bakery Manager') {
+    if (!isSuperAdmin) {
       toast({ variant: "destructive", title: "Access Denied", description: "Only Super Admins can manage sites." });
       return;
     }
+
+    const siteToDelete = sites.find(s => s.id === id);
+    if (!siteToDelete) return;
+
+    // Remove the site
     setSites(sites.filter(s => s.id !== id));
-    toast({ title: "Site removed", description: "The location has been deleted from the registry." });
+    // Remove all users associated with this site (Delete the team)
+    setUsers(users.filter(u => u.siteId !== id));
+
+    toast({ 
+      title: "Site & Team Removed", 
+      description: `The site "${siteToDelete.name}" and all associated staff have been deleted.` 
+    });
+  };
+
+  const updateSiteField = (siteId: string, field: string, value: string) => {
+    if (!isSuperAdmin) return;
+    setSites(sites.map(s => s.id === siteId ? { ...s, [field]: value } : s));
   };
 
   const updateUserField = (userId: string, field: string, value: string) => {
     const targetUser = users.find(u => u.id === userId);
     
-    // Restrictions
     if (targetUser?.username === 'tristenb' && field === 'status') {
       toast({ variant: "destructive", title: "Action Restricted", description: "The Super Admin account must remain active." });
       return;
     }
 
-    if (currentUser?.role === 'Bakery Manager' && targetUser?.siteId !== currentUser.siteId) {
+    if (isBakeryManager && targetUser?.siteId !== currentUser.siteId) {
       toast({ variant: "destructive", title: "Access Denied", description: "You can only manage staff at your site." });
       return;
     }
 
     setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u));
-    toast({ title: "Staff updated", description: `Updated ${field} for member.` });
   };
-
-  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'Super Admin';
-  const isBakeryManager = currentUser?.role === 'Bakery Manager';
 
   const visibleUsers = isSuperAdmin 
     ? users 
@@ -312,11 +323,6 @@ export default function AdminPage() {
                     ))}
                   </TableBody>
                 </Table>
-                {filteredUsers.length === 0 && (
-                  <div className="py-12 text-center text-muted-foreground">
-                    No staff found in this view.
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -328,7 +334,7 @@ export default function AdminPage() {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                       <CardTitle className="font-headline">Site Registry</CardTitle>
-                      <CardDescription>Manage all bakery and cafe locations</CardDescription>
+                      <CardDescription>Manage all bakery and cafe locations and their teams</CardDescription>
                     </div>
                     <Button size="sm">
                       <Plus className="mr-2 h-4 w-4" /> Add New Site
@@ -340,7 +346,7 @@ export default function AdminPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Bakery Name</TableHead>
-                        <TableHead>Location</TableHead>
+                        <TableHead>Location Address</TableHead>
                         <TableHead>Primary Manager</TableHead>
                         <TableHead>Staff Count</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -349,11 +355,24 @@ export default function AdminPage() {
                     <TableBody>
                       {sites.map((site) => (
                         <TableRow key={site.id}>
-                          <TableCell className="font-bold">{site.name}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                              <MapPin className="h-3 w-3" />
-                              {site.location}
+                            <div className="relative">
+                              <Building className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                              <Input 
+                                value={site.name} 
+                                onChange={(e) => updateSiteField(site.id, 'name', e.target.value)}
+                                className="h-8 pl-7 text-xs font-bold w-[200px]"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative">
+                              <MapIcon className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                              <Input 
+                                value={site.location} 
+                                onChange={(e) => updateSiteField(site.id, 'location', e.target.value)}
+                                className="h-8 pl-7 text-xs w-[250px]"
+                              />
                             </div>
                           </TableCell>
                           <TableCell className="text-xs">{site.manager}</TableCell>
@@ -364,14 +383,12 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Settings className="h-3 w-3" />
-                              </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => handleDeleteSite(site.id)}
+                                title="Delete site and entire team"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
