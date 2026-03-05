@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -46,7 +45,6 @@ export function RequestFeedback() {
             <SelectContent>
               <SelectItem value="general">General Feedback</SelectItem>
               <SelectItem value="spark">SPARK Competency</SelectItem>
-              <SelectItem value="pulse">Quick Pulse</SelectItem>
             </SelectContent>
           </Select>
           <Button className="w-full" disabled={loading}>

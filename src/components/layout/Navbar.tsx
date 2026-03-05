@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LayoutDashboard, MessageSquare, ClipboardCheck, Sparkles, User } from "lucide-react";
+import { LayoutDashboard, MessageSquare, ClipboardCheck, Sparkles, User, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
-  { label: "Pulse Check", href: "/pulse", icon: Heart },
   { label: "Surveys", href: "/surveys", icon: ClipboardCheck },
   { label: "Dashboard", href: "/dashboard", icon: Sparkles },
   { label: "Shower Thoughts", href: "/shower-thoughts", icon: MessageSquare },
@@ -21,8 +20,10 @@ export function Navbar() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-headline font-bold text-lg">P</div>
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
+                <MessageSquareText className="h-5 w-5 fill-current" />
+              </div>
               <span className="font-headline font-bold text-xl tracking-tight hidden sm:block">Provr.</span>
             </Link>
           </div>

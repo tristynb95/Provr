@@ -4,7 +4,7 @@ import { RequestFeedback } from "@/components/home/RequestFeedback";
 import { ShowerThoughtQuick } from "@/components/home/ShowerThoughtQuick";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, ClipboardCheck, Award } from "lucide-react";
+import { ClipboardCheck, Award, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -18,21 +18,7 @@ export default function HomePage() {
         </header>
 
         {/* Hero Quick Actions */}
-        <section className="grid gap-6 md:grid-cols-3 mb-12">
-          <Link href="/pulse" className="group">
-            <Card className="h-full border-none bg-primary text-primary-foreground overflow-hidden relative shadow-lg hover:-translate-y-1 transition-transform">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                <Heart className="h-24 w-24" />
-              </div>
-              <CardContent className="p-6">
-                <Heart className="h-8 w-8 mb-4" />
-                <h3 className="font-headline text-xl font-bold mb-1">Pulse Check</h3>
-                <p className="text-primary-foreground/80 text-sm mb-4">Quick 30-second survey to see how you're feeling.</p>
-                <Button variant="secondary" size="sm" className="w-full">Start Pulse</Button>
-              </CardContent>
-            </Card>
-          </Link>
-
+        <section className="grid gap-6 md:grid-cols-2 mb-12">
           <Link href="/surveys" className="group">
             <Card className="h-full border-none bg-foreground text-background overflow-hidden relative shadow-lg hover:-translate-y-1 transition-transform">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
