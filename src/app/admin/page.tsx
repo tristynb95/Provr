@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -38,19 +37,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-
-const INITIAL_SITES = [
-  { id: "s1", name: "Downtown Bakery", location: "123 Main St", manager: "Jack Thompson" },
-  { id: "s2", name: "Northside Cafe", location: "456 High St", manager: "Sarah Miller" },
-  { id: "s3", name: "East End Pastries", location: "789 Park Rd", manager: "Tristen B." },
-];
-
-const INITIAL_USERS = [
-  { id: "u1", name: "Tristen Bayley", username: "tristenb", pin: "000000", role: "Super Admin", siteId: "s3", status: "Active", email: "tristen@provr.com" },
-  { id: "u2", name: "Sarah Miller", username: "sarahm", pin: "123456", role: "Bakery Manager", siteId: "s2", status: "Active", email: "sarah@provr.com" },
-  { id: "u3", name: "Alex Baker", username: "alexb", pin: "111111", role: "Barista", siteId: "s1", status: "Active", email: "alex@provr.com" },
-  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Bakery Manager", siteId: "s1", status: "Inactive", email: "jack@provr.com" },
-];
+import {
+  subscribeSites,
+  subscribeUsers,
+  updateSite,
+  deleteSite,
+  deleteUsersForSite,
+  updateUser,
+  type Site,
+  type User,
+} from "@/lib/firestore";
 
 const ROLES = ["Barista", "Head Baker", "Bakery Manager", "Shift Lead", "Super Admin"];
 const STATUSES = ["Active", "Inactive"];
@@ -60,12 +56,12 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [sites, setSites] = useState(INITIAL_SITES);
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [filterSite, setFilterSite] = useState("all");
-  
+
   // Deletion State
-  const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const [siteToDelete, setSiteToDelete] = useState<Site | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -75,27 +71,40 @@ export default function AdminPage() {
       router.push('/login');
       return;
     }
-    
+
     const user = JSON.parse(storedUser);
     const hasAdminAccess = user.role === 'admin' || user.role === 'Super Admin' || user.role === 'Bakery Manager';
-    
+
     if (!hasAdminAccess) {
       router.push('/');
       return;
     }
-    
+
     setCurrentUser(user);
     if (user.role === 'Bakery Manager' && user.siteId) {
       setFilterSite(user.siteId);
     }
-    
+
     setLoading(false);
   }, [router]);
+
+  // Subscribe to Firestore once auth check passes
+  useEffect(() => {
+    if (loading) return;
+
+    const unsubSites = subscribeSites(setSites);
+    const unsubUsers = subscribeUsers(setUsers);
+
+    return () => {
+      unsubSites();
+      unsubUsers();
+    };
+  }, [loading]);
 
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'Super Admin';
   const isBakeryManager = currentUser?.role === 'Bakery Manager';
 
-  const initiateDeleteSite = (site: any) => {
+  const initiateDeleteSite = (site: Site) => {
     if (!isSuperAdmin) {
       toast({ variant: "destructive", title: "Access Denied", description: "Only Super Admins can manage sites." });
       return;
@@ -105,38 +114,44 @@ export default function AdminPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!siteToDelete) return;
-    
+
     if (deleteConfirmText !== `delete ${siteToDelete.name}`) {
       toast({ variant: "destructive", title: "Incorrect Confirmation", description: "The text entered does not match the required format." });
       return;
     }
 
-    // Remove the site
-    setSites(sites.filter(s => s.id !== siteToDelete.id));
-    
-    // Remove all users associated with this site, EXCEPT for Super Admins
-    // This ensures Tristen retains access even if his 'home' site is deleted.
-    setUsers(users.filter(u => u.siteId !== siteToDelete.id || u.role === 'Super Admin' || u.username === 'tristenb'));
+    try {
+      await deleteUsersForSite(siteToDelete.id, true);
+      await deleteSite(siteToDelete.id);
 
-    toast({ 
-      title: "Site Removed", 
-      description: `The site "${siteToDelete.name}" and its associated staff (excluding Super Admins) have been deleted.` 
-    });
-    
+      toast({
+        title: "Site Removed",
+        description: `The site "${siteToDelete.name}" and its associated staff (excluding Super Admins) have been deleted.`
+      });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete the site. Please try again." });
+    }
+
     setIsDeleteDialogOpen(false);
     setSiteToDelete(null);
   };
 
-  const updateSiteField = (siteId: string, field: string, value: string) => {
+  const handleUpdateSiteField = async (siteId: string, field: string, value: string) => {
     if (!isSuperAdmin) return;
-    setSites(sites.map(s => s.id === siteId ? { ...s, [field]: value } : s));
+    try {
+      await updateSite(siteId, { [field]: value });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Error", description: "Failed to update site." });
+    }
   };
 
-  const updateUserField = (userId: string, field: string, value: string) => {
+  const handleUpdateUserField = async (userId: string, field: string, value: string) => {
     const targetUser = users.find(u => u.id === userId);
-    
+
     if (targetUser?.username === 'tristenb' && field === 'status') {
       toast({ variant: "destructive", title: "Action Restricted", description: "The Super Admin account must remain active." });
       return;
@@ -147,19 +162,24 @@ export default function AdminPage() {
       return;
     }
 
-    setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u));
+    try {
+      await updateUser(userId, { [field]: value });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Error", description: "Failed to update user." });
+    }
   };
 
-  const visibleUsers = isSuperAdmin 
-    ? users 
+  const visibleUsers = isSuperAdmin
+    ? users
     : users.filter(u => u.siteId === currentUser?.siteId);
 
-  const filteredUsers = filterSite === "all" 
-    ? visibleUsers 
+  const filteredUsers = filterSite === "all"
+    ? visibleUsers
     : visibleUsers.filter(u => u.siteId === filterSite);
 
-  const visibleSites = isSuperAdmin 
-    ? sites 
+  const visibleSites = isSuperAdmin
+    ? sites
     : sites.filter(s => s.id === currentUser?.siteId);
 
   if (loading) {
@@ -180,8 +200,8 @@ export default function AdminPage() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            {isSuperAdmin 
-              ? "Manage all bakery sites, staff credentials, and system configuration." 
+            {isSuperAdmin
+              ? "Manage all bakery sites, staff credentials, and system configuration."
               : "Manage staff accounts and credentials for your specific location."}
           </p>
         </header>
@@ -220,8 +240,8 @@ export default function AdminPage() {
                   <div>
                     <CardTitle className="font-headline">Employee Registry</CardTitle>
                     <CardDescription>
-                      {isSuperAdmin 
-                        ? "Manage all staff across the organization" 
+                      {isSuperAdmin
+                        ? "Manage all staff across the organization"
                         : `Manage staff for ${visibleSites[0]?.name}`}
                     </CardDescription>
                   </div>
@@ -271,9 +291,9 @@ export default function AdminPage() {
                         <TableCell>
                           <div className="relative">
                             <UserIcon className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
-                            <Input 
-                              value={user.username} 
-                              onChange={(e) => updateUserField(user.id, 'username', e.target.value)}
+                            <Input
+                              defaultValue={user.username}
+                              onBlur={(e) => handleUpdateUserField(user.id, 'username', e.target.value)}
                               className="h-8 pl-7 text-xs w-[120px]"
                             />
                           </div>
@@ -281,13 +301,13 @@ export default function AdminPage() {
                         <TableCell>
                           <div className="relative">
                             <Lock className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
-                            <Input 
-                              value={user.pin} 
+                            <Input
+                              defaultValue={user.pin}
                               type="password"
                               maxLength={6}
-                              onChange={(e) => {
+                              onBlur={(e) => {
                                 const val = e.target.value.replace(/\D/g, '');
-                                if (val.length <= 6) updateUserField(user.id, 'pin', val);
+                                if (val.length <= 6) handleUpdateUserField(user.id, 'pin', val);
                               }}
                               className="h-8 pl-7 text-xs w-[80px] font-mono"
                             />
@@ -295,9 +315,9 @@ export default function AdminPage() {
                         </TableCell>
                         {isSuperAdmin && (
                           <TableCell>
-                            <Select 
-                              defaultValue={user.siteId} 
-                              onValueChange={(val) => updateUserField(user.id, 'siteId', val)}
+                            <Select
+                              defaultValue={user.siteId}
+                              onValueChange={(val) => handleUpdateUserField(user.id, 'siteId', val)}
                             >
                               <SelectTrigger className="h-8 w-[160px] bg-background text-xs">
                                 <SelectValue />
@@ -312,10 +332,10 @@ export default function AdminPage() {
                           </TableCell>
                         )}
                         <TableCell>
-                          <Select 
-                            defaultValue={user.role} 
+                          <Select
+                            defaultValue={user.role}
                             disabled={user.username === 'tristenb'}
-                            onValueChange={(val) => updateUserField(user.id, 'role', val)}
+                            onValueChange={(val) => handleUpdateUserField(user.id, 'role', val)}
                           >
                             <SelectTrigger className="h-8 w-[140px] bg-background text-xs">
                               <SelectValue />
@@ -328,10 +348,10 @@ export default function AdminPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Select 
-                            defaultValue={user.status} 
+                          <Select
+                            defaultValue={user.status}
                             disabled={user.username === 'tristenb'}
-                            onValueChange={(val) => updateUserField(user.id, 'status', val)}
+                            onValueChange={(val) => handleUpdateUserField(user.id, 'status', val)}
                           >
                             <SelectTrigger className={`h-8 w-[110px] text-xs font-bold ${user.status === 'Active' ? 'text-green-600' : 'text-destructive'}`}>
                               <SelectValue />
@@ -391,9 +411,9 @@ export default function AdminPage() {
                           <TableCell>
                             <div className="relative">
                               <Building className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
-                              <Input 
-                                value={site.name} 
-                                onChange={(e) => updateSiteField(site.id, 'name', e.target.value)}
+                              <Input
+                                defaultValue={site.name}
+                                onBlur={(e) => handleUpdateSiteField(site.id, 'name', e.target.value)}
                                 className="h-8 pl-7 text-xs font-bold w-[200px]"
                               />
                             </div>
@@ -401,9 +421,9 @@ export default function AdminPage() {
                           <TableCell>
                             <div className="relative">
                               <MapIcon className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
-                              <Input 
-                                value={site.location} 
-                                onChange={(e) => updateSiteField(site.id, 'location', e.target.value)}
+                              <Input
+                                defaultValue={site.location}
+                                onBlur={(e) => handleUpdateSiteField(site.id, 'location', e.target.value)}
                                 className="h-8 pl-7 text-xs w-[250px]"
                               />
                             </div>
@@ -416,9 +436,9 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => initiateDeleteSite(site)}
                                 title="Delete site and associated team"
@@ -486,7 +506,7 @@ export default function AdminPage() {
                 <Label htmlFor="delete-confirm" className="text-xs font-bold uppercase text-muted-foreground">
                   Type <code className="bg-muted px-1 py-0.5 rounded text-destructive">{expectedConfirmText}</code> to confirm
                 </Label>
-                <Input 
+                <Input
                   id="delete-confirm"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
@@ -498,8 +518,8 @@ export default function AdminPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleConfirmDelete}
               disabled={deleteConfirmText !== expectedConfirmText}
             >

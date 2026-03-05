@@ -1,29 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { summarizeTeamShowerThoughts, type SummarizeTeamShowerThoughtsOutput } from "@/ai/flows/summarize-team-shower-thoughts";
 import { Lightbulb, Sparkles, MessageSquare, AlertCircle, Heart, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const mockThoughts = [
-  "The coffee machine on the left is acting up again, might need a service.",
-  "Everyone is doing so well with the new autumn menu launch! Big love to the team.",
-  "I think we should have more training on the gluten-free bread prep to avoid cross contamination.",
-  "Can we look into a better way to organize the back storage? It's becoming a trip hazard.",
-  "I love working here! Such a great vibe in the mornings."
-];
+import { subscribeShowerThoughts, type ShowerThought } from "@/lib/firestore";
 
 export default function ShowerThoughtsPage() {
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<SummarizeTeamShowerThoughtsOutput | null>(null);
+  const [thoughts, setThoughts] = useState<ShowerThought[]>([]);
+
+  useEffect(() => {
+    const unsub = subscribeShowerThoughts(setThoughts);
+    return () => unsub();
+  }, []);
 
   const generateSummary = async () => {
+    if (thoughts.length === 0) return;
     setLoading(true);
     try {
-      const result = await summarizeTeamShowerThoughts({ showerThoughts: mockThoughts });
+      const result = await summarizeTeamShowerThoughts({ showerThoughts: thoughts.map(t => t.text) });
       setSummary(result);
     } catch (error) {
       console.error(error);
@@ -52,9 +52,9 @@ export default function ShowerThoughtsPage() {
              </CardHeader>
              <CardContent>
                 {!summary && !loading && (
-                   <Button onClick={generateSummary} variant="secondary" className="group">
+                   <Button onClick={generateSummary} variant="secondary" className="group" disabled={thoughts.length === 0}>
                      <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-                     Analyze {mockThoughts.length} Recent Thoughts
+                     Analyze {thoughts.length} Recent Thought{thoughts.length !== 1 ? "s" : ""}
                    </Button>
                 )}
 
@@ -110,19 +110,29 @@ export default function ShowerThoughtsPage() {
 
         <section className="grid gap-6">
            <h2 className="font-headline text-2xl font-bold">Recent Feed</h2>
-           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-             {mockThoughts.map((thought, i) => (
-               <Card key={i} className="border-none shadow-md hover:shadow-lg transition-shadow bg-white">
-                 <CardContent className="pt-6">
-                   <div className="flex justify-between items-center mb-4">
-                      <Badge variant="secondary" className="text-[10px] font-bold">Anonymous</Badge>
-                      <span className="text-[10px] font-bold text-muted-foreground">Today</span>
-                   </div>
-                   <p className="text-sm text-foreground/80 leading-relaxed">"{thought}"</p>
-                 </CardContent>
-               </Card>
-             ))}
-           </div>
+           {thoughts.length === 0 ? (
+             <p className="text-muted-foreground text-sm">No thoughts posted yet. Be the first!</p>
+           ) : (
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+               {thoughts.map((thought) => (
+                 <Card key={thought.id} className="border-none shadow-md hover:shadow-lg transition-shadow bg-white">
+                   <CardContent className="pt-6">
+                     <div className="flex justify-between items-center mb-4">
+                        <Badge variant="secondary" className="text-[10px] font-bold">
+                          {thought.anonymous ? "Anonymous" : thought.authorName}
+                        </Badge>
+                        <span className="text-[10px] font-bold text-muted-foreground">
+                          {thought.createdAt?.toDate
+                            ? new Date(thought.createdAt.toDate()).toLocaleDateString()
+                            : "Just now"}
+                        </span>
+                     </div>
+                     <p className="text-sm text-foreground/80 leading-relaxed">"{thought.text}"</p>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+           )}
         </section>
       </main>
     </div>
