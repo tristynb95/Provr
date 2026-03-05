@@ -36,11 +36,12 @@ const INITIAL_SITES = [
 const INITIAL_USERS = [
   { id: "u1", name: "Tristen Bayley", username: "tristenb", pin: "000000", role: "Super Admin", siteId: "s3", status: "Active", email: "tristen@provr.com" },
   { id: "u2", name: "Sarah Miller", username: "sarahm", pin: "123456", role: "Head Baker", siteId: "s2", status: "Active", email: "sarah@provr.com" },
-  { id: "u3", name: "Alex Baker", username: "alexb", pin: "111111", role: "Barista", siteId: "s1", status: "On Shift", email: "alex@provr.com" },
-  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Store Manager", siteId: "s1", status: "Away", email: "jack@provr.com" },
+  { id: "u3", name: "Alex Baker", username: "alexb", pin: "111111", role: "Barista", siteId: "s1", status: "Active", email: "alex@provr.com" },
+  { id: "u4", name: "Jack Thompson", username: "jackt", pin: "222222", role: "Store Manager", siteId: "s1", status: "Inactive", email: "jack@provr.com" },
 ];
 
 const ROLES = ["Barista", "Head Baker", "Store Manager", "Shift Lead", "Super Admin"];
+const STATUSES = ["Active", "Inactive"];
 
 export default function AdminPage() {
   const router = useRouter();
@@ -73,9 +74,7 @@ export default function AdminPage() {
 
   const updateUserField = (userId: string, field: string, value: string) => {
     setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u));
-    if (field === 'role' || field === 'siteId') {
-      toast({ title: "Staff updated", description: `Updated ${field} for member.` });
-    }
+    toast({ title: "Staff updated", description: `Updated ${field} for member.` });
   };
 
   const filteredUsers = filterSite === "all" 
@@ -100,7 +99,7 @@ export default function AdminPage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
           {[
-            { label: "Active Users", value: users.length.toString(), icon: Users, color: "text-blue-500" },
+            { label: "Active Users", value: users.filter(u => u.status === "Active").length.toString(), icon: Users, color: "text-blue-500" },
             { label: "Bakery Sites", value: sites.length.toString(), icon: Building, color: "text-purple-500" },
             { label: "System Health", value: "Optimal", icon: Activity, color: "text-primary" },
             { label: "Storage Used", value: "14%", icon: Database, color: "text-orange-500" },
@@ -163,13 +162,13 @@ export default function AdminPage() {
                       <TableHead>PIN</TableHead>
                       <TableHead>Assigned Site</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Account Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
+                      <TableRow key={user.id} className={user.status === 'Inactive' ? 'opacity-60 bg-muted/10' : ''}>
                         <TableCell className="font-medium">
                           <div className="font-bold">{user.name}</div>
                           <div className="text-[10px] text-muted-foreground">{user.email}</div>
@@ -230,9 +229,23 @@ export default function AdminPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.status === "Active" || user.status === "On Shift" ? "default" : "secondary"} className="text-[10px]">
-                            {user.status}
-                          </Badge>
+                          <Select 
+                            defaultValue={user.status} 
+                            onValueChange={(val) => updateUserField(user.id, 'status', val)}
+                          >
+                            <SelectTrigger className={`h-8 w-[110px] text-xs font-bold ${user.status === 'Active' ? 'text-green-600' : 'text-destructive'}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUSES.map(status => (
+                                <SelectItem key={status} value={status}>
+                                  <Badge variant={status === 'Active' ? 'default' : 'secondary'} className="text-[10px] w-full justify-center">
+                                    {status}
+                                  </Badge>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" className="h-8 w-8">
