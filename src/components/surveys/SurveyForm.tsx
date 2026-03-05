@@ -81,7 +81,6 @@ export function SurveyForm({ surveyData, taker, subject, onSubmit, isSelfAssessm
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-24">
-      {/* Sticky Progress Bar */}
       <div className="sticky top-[65px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-4 px-4 border-b">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">Completion Progress</span>

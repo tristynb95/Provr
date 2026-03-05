@@ -37,7 +37,7 @@ export default function SelfAssessmentPage() {
     }, 2000);
   };
 
-  if (!user) return null;
+  if (!user) return <div className="min-h-screen flex items-center justify-center">Loading assessment...</div>;
 
   const surveyTaker = {
     name: user.name,
