@@ -1,0 +1,511 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents an employee within the organization using the Provr Pulse platform. Authentication is handled externally.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "jobTitle": {
+          "type": "string",
+          "description": "The user's job title."
+        },
+        "department": {
+          "type": "string",
+          "description": "The department the user belongs to."
+        },
+        "managerId": {
+          "type": "string",
+          "description": "Reference to the User's direct manager. (Relationship: User 1:N User - self-referencing)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "jobTitle",
+        "department",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Survey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Survey",
+      "type": "object",
+      "description": "Defines the structure and type of a survey available in the Provr Pulse platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Survey entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the survey (e.g., 'Pulse Check', 'General Feedback Survey', 'SPARK Competency Survey')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the survey's purpose."
+        },
+        "surveyType": {
+          "type": "string",
+          "description": "Categorization of the survey (e.g., 'PULSE_CHECK', 'GENERAL_FEEDBACK', 'SPARK_COMPETENCY')."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if the survey is currently active and available for use."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the survey was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the survey was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "surveyType",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Represents a single question within a survey.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Question entity."
+        },
+        "surveyId": {
+          "type": "string",
+          "description": "Reference to the Survey this question belongs to. (Relationship: Survey 1:N Question)"
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The actual text of the question."
+        },
+        "questionType": {
+          "type": "string",
+          "description": "The type of response expected (e.g., 'TEXT_SHORT', 'TEXT_LONG', 'RATING_1_10', 'MULTIPLE_CHOICE', 'SINGLE_CHOICE')."
+        },
+        "options": {
+          "type": "array",
+          "description": "For multiple/single choice questions, a list of predefined options.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the question within its survey."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the question was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the question was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "surveyId",
+        "questionText",
+        "questionType",
+        "order",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FeedbackRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FeedbackRequest",
+      "type": "object",
+      "description": "Represents a request for feedback initiated by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FeedbackRequest entity."
+        },
+        "requesterId": {
+          "type": "string",
+          "description": "Reference to the User who initiated the request. (Relationship: User 1:N FeedbackRequest)"
+        },
+        "surveyId": {
+          "type": "string",
+          "description": "Reference to the Survey type being requested. (Relationship: Survey 1:N FeedbackRequest)"
+        },
+        "recipientId": {
+          "type": "string",
+          "description": "Reference to the User from whom feedback is requested. Can be null for anonymous team feedback. (Relationship: User 0..1 FeedbackRequest)"
+        },
+        "isTeamAnonymous": {
+          "type": "boolean",
+          "description": "True if feedback is requested anonymously from an entire team, false otherwise."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the request (e.g., 'PENDING', 'COMPLETED', 'CANCELLED')."
+        },
+        "requestedAt": {
+          "type": "string",
+          "description": "Timestamp when the request was made.",
+          "format": "date-time"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Optional due date for the feedback.",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the request was considered completed (all responses collected or due date passed).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "requesterId",
+        "surveyId",
+        "isTeamAnonymous",
+        "status",
+        "requestedAt"
+      ]
+    },
+    "FeedbackResponse": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FeedbackResponse",
+      "type": "object",
+      "description": "Represents a completed survey response, either a self-assessment or feedback given by one user to another.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FeedbackResponse entity."
+        },
+        "surveyId": {
+          "type": "string",
+          "description": "Reference to the Survey template used for this response. (Relationship: Survey 1:N FeedbackResponse)"
+        },
+        "feedbackRequestId": {
+          "type": "string",
+          "description": "Reference to the FeedbackRequest if this response is part of one. Null for self-assessments not triggered by a request. (Relationship: FeedbackRequest 0..1 FeedbackResponse)"
+        },
+        "responderId": {
+          "type": "string",
+          "description": "Reference to the User who provided the feedback/self-assessment. (Relationship: User 1:N FeedbackResponse)"
+        },
+        "recipientId": {
+          "type": "string",
+          "description": "Reference to the User for whom the feedback is provided (the subject). (Relationship: User 1:N FeedbackResponse)"
+        },
+        "isSelfAssessment": {
+          "type": "boolean",
+          "description": "True if the responderId is the same as the recipientId."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp when the feedback was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "surveyId",
+        "responderId",
+        "recipientId",
+        "isSelfAssessment",
+        "submittedAt"
+      ]
+    },
+    "QuestionResponse": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuestionResponse",
+      "type": "object",
+      "description": "Stores the actual answer for a specific question within a FeedbackResponse.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the QuestionResponse entity."
+        },
+        "feedbackResponseId": {
+          "type": "string",
+          "description": "Reference to the FeedbackResponse this answer belongs to. (Relationship: FeedbackResponse 1:N QuestionResponse)"
+        },
+        "questionId": {
+          "type": "string",
+          "description": "Reference to the Question that was answered. (Relationship: Question 1:N QuestionResponse)"
+        },
+        "responseText": {
+          "type": "string",
+          "description": "The text-based answer for the question."
+        },
+        "responseRating": {
+          "type": "number",
+          "description": "Numeric rating if the question type is a rating (e.g., NPS score)."
+        },
+        "responseSelection": {
+          "type": "string",
+          "description": "Selected option for single-choice questions."
+        },
+        "responseSelections": {
+          "type": "array",
+          "description": "Selected options for multiple-choice questions.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the response was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the response was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "feedbackResponseId",
+        "questionId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ShowerThought": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShowerThought",
+      "type": "object",
+      "description": "A free-form text submission from an employee to their manager, with an option for anonymity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ShowerThought entity."
+        },
+        "submitterId": {
+          "type": "string",
+          "description": "Reference to the User who submitted the thought. (Relationship: User 1:N ShowerThought)"
+        },
+        "managerId": {
+          "type": "string",
+          "description": "Reference to the User who is the recipient (manager) of the thought. (Relationship: User 1:N ShowerThought)"
+        },
+        "content": {
+          "type": "string",
+          "description": "The actual text content of the shower thought."
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "True if the submitter chose to be anonymous; false otherwise."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp when the shower thought was submitted.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the thought (e.g., 'NEW', 'REVIEWED', 'ARCHIVED')."
+        }
+      },
+      "required": [
+        "id",
+        "submitterId",
+        "managerId",
+        "content",
+        "isAnonymous",
+        "submittedAt",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores individual user profiles. Access is strictly private to the authenticated user matching `{userId}`. Includes denormalized 'id' matching the document ID for self-ownership verification.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching 'request.auth.uid'."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/app_roles/admins/{adminId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Grants global administrator privileges to a user. Access is determined by the existence of a document for 'request.auth.uid' at this path. This collection implements Database Access Control (DBAC).",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the user who is an administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/surveys/{surveyId}",
+        "definition": {
+          "entityName": "Survey",
+          "schema": {
+            "$ref": "#/backend/entities/Survey"
+          },
+          "description": "Global collection for survey templates. Read-only for all authenticated users. Write access is restricted to administrators.",
+          "params": [
+            {
+              "name": "surveyId",
+              "description": "The unique identifier of the survey template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/surveys/{surveyId}/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": {
+            "$ref": "#/backend/entities/Question"
+          },
+          "description": "Questions belonging to a specific survey. Inherits read-only access for all authenticated users and write access for administrators from the parent survey. Includes denormalized 'surveyId' for authorization independence.",
+          "params": [
+            {
+              "name": "surveyId",
+              "description": "The unique identifier of the parent survey."
+            },
+            {
+              "name": "questionId",
+              "description": "The unique identifier of the question."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/feedback_requests/{feedbackRequestId}",
+        "definition": {
+          "entityName": "FeedbackRequest",
+          "schema": {
+            "$ref": "#/backend/entities/FeedbackRequest"
+          },
+          "description": "Stores initiated feedback requests. Accessible by the 'requesterId' (creator) and 'recipientId' (subject). Includes denormalized 'requesterId', 'recipientId', 'surveyId', 'isTeamAnonymous', and 'status' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "feedbackRequestId",
+              "description": "The unique identifier of the feedback request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/feedback_responses/{feedbackResponseId}",
+        "definition": {
+          "entityName": "FeedbackResponse",
+          "schema": {
+            "$ref": "#/backend/entities/FeedbackResponse"
+          },
+          "description": "Stores completed feedback responses. Accessible by the 'responderId' (who gave the feedback) and 'recipientId' (who received the feedback). Includes denormalized 'surveyId', 'feedbackRequestId', 'responderId', 'recipientId', and 'isSelfAssessment' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "feedbackResponseId",
+              "description": "The unique identifier of the feedback response."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}",
+        "definition": {
+          "entityName": "QuestionResponse",
+          "schema": {
+            "$ref": "#/backend/entities/QuestionResponse"
+          },
+          "description": "Stores individual answers within a feedback response. Accessible by the 'responderId' and 'recipientId' (denormalized from the parent 'FeedbackResponse'). Includes denormalized 'feedbackResponseId', 'questionId', 'responderId', and 'recipientId' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "feedbackResponseId",
+              "description": "The unique identifier of the parent feedback response."
+            },
+            {
+              "name": "questionResponseId",
+              "description": "The unique identifier of the question response."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/shower_thoughts/{showerThoughtId}",
+        "definition": {
+          "entityName": "ShowerThought",
+          "schema": {
+            "$ref": "#/backend/entities/ShowerThought"
+          },
+          "description": "Free-form thoughts submitted by employees to their managers. Accessible by the 'submitterId' (if not anonymous) and 'managerId'. Includes denormalized 'submitterId', 'managerId', 'isAnonymous', and 'status' for authorization independence and efficient querying.",
+          "params": [
+            {
+              "name": "showerThoughtId",
+              "description": "The unique identifier of the shower thought."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore data structure adheres to the core design principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants, as well as the design strategy mandates. This structure aims for simple, robust, and easily debuggable security rules.\n\n**Authorization Independence via Denormalization (Mandate A):**\nTo eliminate the need for `get()` calls in security rules and enable atomic operations, critical authorization fields are denormalized directly into the documents where they are needed. For example:\n*   In `/feedback_requests/{feedbackRequestId}`, `requesterId`, `recipientId`, and `isTeamAnonymous` are present to authorize access by the initiator and the subject of the request without looking up other documents.\n*   In `/feedback_responses/{feedbackResponseId}`, `responderId` and `recipientId` are included to allow the respondent to read their submission and the recipient to read feedback received.\n*   Similarly, `/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}` denormalizes `responderId` and `recipientId` from its parent `FeedbackResponse` to authorize access at the individual question response level.\n*   `/shower_thoughts/{showerThoughtId}` includes `submitterId`, `managerId`, and `isAnonymous` for direct authorization based on ownership and anonymity status.\n\n**Structural Segregation (Mandate B):**\nCollections are designed to have homogeneous security postures:\n*   `/users/{userId}` is strictly private to the authenticated user.\n*   `/app_roles/admins/{adminId}` is a dedicated collection for checking administrator roles (existence-based).\n*   `/surveys/{surveyId}` and its subcollection `/surveys/{surveyId}/questions/{questionId}` are globally readable by all authenticated users, with write access restricted to administrators.\n*   `/feedback_requests/{feedbackRequestId}`, `/feedback_responses/{feedbackResponseId}`, and their subcollection `/feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}` are accessible to specific users based on their roles as requester, responder, or recipient, leveraging denormalized IDs.\n*   `/shower_thoughts/{showerThoughtId}` is managed by `submitterId` and `managerId` with specific rules for anonymity.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure and efficient `list` operations by making authorization fields directly queryable. For instance:\n*   A user can list their own feedback requests using `db.collection('feedback_requests').where('requesterId', '==', auth.uid)`. The security rules would permit this `list` if `request.auth.uid` matches `resource.data.requesterId` or `resource.data.recipientId` (for incoming requests).\n*   A manager can list shower thoughts directed at them using `db.collection('shower_thoughts').where('managerId', '==', auth.uid)`. Rules would permit if `request.auth.uid` matches `resource.data.managerId`.\n\nThis design ensures that common list queries needed for dashboards and user-specific views are directly supported by indexes on the denormalized fields, and security rules can validate access without complex, expensive, or insecure filtering logic.\n\n**Note on Next.js Error (Module not found: Can't resolve 'child_process'):**\nThe reported error indicates `firebase-admin` is being imported into a client-side component or module. `firebase-admin` is a Node.js SDK and should *never* be used in a browser environment, as it relies on Node.js-specific modules like `child_process`. To resolve this, you must strictly separate client-side and server-side Firebase code:\n1.  **Client-Side:** Use the `firebase/app`, `firebase/firestore`, etc., client SDKs (e.g., `import { getFirestore } from 'firebase/firestore'`). These are browser-compatible.\n2.  **Server-Side:** Use `firebase-admin` only within Next.js API routes, Server Components, or dedicated backend services (e.g., `src/server/firebase-admin.ts` imported only by server-side files). Do not import any `firebase-admin` related code into files that are eventually bundled for the browser."
+  }
+}

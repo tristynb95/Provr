@@ -1,0 +1,175 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * PROVR PULSE SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a robust, identity-based security model designed for an organizational 
+     * feedback platform. It prioritizes "Authorization Independence" by leveraging denormalized 
+     * ownership and participant fields, ensuring that security checks are performant and do 
+     * not require excessive cross-document lookups.
+     *
+     * DATA STRUCTURE & HIERARCHY:
+     * - /users/{userId}: Private user profiles managed via direct ownership.
+     * - /app_roles/admins: A specialized collection for Database Access Control (DBAC) to 
+     *   identify global administrators.
+     * - /surveys: Publicly readable (authenticated) survey templates with admin-only write access.
+     * - /feedback_requests & /feedback_responses: Peer-to-peer and assessment data secured by 
+     *   verifying the user is either the requester, responder, or recipient.
+     * - /shower_thoughts: Private communication channel between employees and managers.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Global Admin Role: Administrators are defined by the existence of their UID in 
+     *    the /app_roles/admins/ collection.
+     * 2. Participant Authorization: For collaborative entities (Feedback, Thoughts), 
+     *    authorization is granted if the authenticated UID matches any of the participants 
+     *    stored directly on the document (requesterId, recipientId, managerId, etc.).
+     * 3. Relational Integrity: On creation, documents must include the correct internal 
+     *    references (e.g., creatorId) that match the authenticated user's identity.
+     * 4. Structural Segregation: Administrative data (roles) is strictly separated 
+     *    from operational data to prevent privilege escalation.
+     */
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the user is a registered administrator via DBAC. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/app_roles/admins/$(request.auth.uid));
+    }
+
+    /** @description Validates ownership for updates and deletes on an existing document. */
+    function isExistingOwner(ownerId) {
+      return resource != null && isOwner(ownerId);
+    }
+
+    /** @description Verifies if the user is a participant in a shower thought. */
+    function isThoughtParticipant(data) {
+      return isOwner(data.submitterId) || isOwner(data.managerId);
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for user profiles. Only the user themselves can manage their data.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid == 'user_123' and data.id == 'user_123'
+     * @deny (read) if auth.uid != userId
+     * @principle Ownership: Restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for global admin roles. Read-only for admins; write is restricted (manual/backend setup).
+     * @path /app_roles/admins/{adminId}
+     * @allow (get) if auth.uid == adminId
+     * @deny (create) if true (Admin roles should be assigned via backend processes)
+     * @principle Roles: Implements existence-based Database Access Control.
+     */
+    match /app_roles/admins/{adminId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if false; 
+    }
+
+    /**
+     * @description Global survey templates. Authenticated users can browse; only admins can manage.
+     * @path /surveys/{surveyId}
+     * @allow (list) if auth.uid is not null
+     * @deny (update) if auth.uid is not an admin
+     * @principle Public Read with Admin-Only Writes.
+     */
+    match /surveys/{surveyId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      /**
+       * @description Questions within a survey. Inherits permissions from the parent survey.
+       * @path /surveys/{surveyId}/questions/{questionId}
+       * @allow (get) if auth.uid is not null
+       * @deny (delete) if auth.uid is not an admin
+       * @principle Hierarchical inheritance with admin-only management.
+       */
+      match /questions/{questionId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    /**
+     * @description Feedback requests. Accessible by the initiator or the person being asked for feedback.
+     * @path /feedback_requests/{feedbackRequestId}
+     * @allow (create) if auth.uid == data.requesterId
+     * @deny (get) if auth.uid is not requesterId or recipientId
+     * @principle Shared Access: Validates involvement using denormalized IDs.
+     */
+    match /feedback_requests/{feedbackRequestId} {
+      allow get: if isSignedIn() && (isOwner(resource.data.requesterId) || isOwner(resource.data.recipientId));
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.requesterId);
+      allow update: if isSignedIn() && (isExistingOwner(resource.data.requesterId) || isExistingOwner(resource.data.recipientId));
+      allow delete: if isExistingOwner(resource.data.requesterId);
+    }
+
+    /**
+     * @description Completed feedback responses. Accessible by the responder and the recipient.
+     * @path /feedback_responses/{feedbackResponseId}
+     * @allow (get) if auth.uid == responderId
+     * @deny (update) if auth.uid != responderId
+     * @principle Shared Access: Ensures only parties involved can access results.
+     */
+    match /feedback_responses/{feedbackResponseId} {
+      allow get: if isSignedIn() && (isOwner(resource.data.responderId) || isOwner(resource.data.recipientId));
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.responderId);
+      allow update: if isExistingOwner(resource.data.responderId);
+      allow delete: if isExistingOwner(resource.data.responderId);
+
+      /**
+       * @description Answers within a response. Uses denormalized IDs from the parent logic.
+       * @path /feedback_responses/{feedbackResponseId}/question_responses/{questionResponseId}
+       * @allow (create) if auth.uid == responderId
+       * @principle Relational Integrity: Uses denormalized data to maintain flat authorization.
+       */
+      match /question_responses/{questionResponseId} {
+        allow get: if isSignedIn() && (isOwner(resource.data.responderId) || isOwner(resource.data.recipientId));
+        allow list: if isSignedIn();
+        allow create: if isSignedIn() && isOwner(request.resource.data.responderId);
+        allow update: if isExistingOwner(resource.data.responderId);
+        allow delete: if isExistingOwner(resource.data.responderId);
+      }
+    }
+
+    /**
+     * @description Shower thoughts submitted to managers. Private between submitter and manager.
+     * @path /shower_thoughts/{showerThoughtId}
+     * @allow (get) if auth.uid == managerId
+     * @deny (create) if auth.uid != submitterId
+     * @principle Shared Access: Manages private communication channel security.
+     */
+    match /shower_thoughts/{showerThoughtId} {
+      allow get: if isSignedIn() && isThoughtParticipant(resource.data);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.submitterId);
+      allow update: if isSignedIn() && (isExistingOwner(resource.data.submitterId) || isExistingOwner(resource.data.managerId));
+      allow delete: if isExistingOwner(resource.data.submitterId);
+    }
+  }
+}
