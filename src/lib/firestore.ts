@@ -111,16 +111,16 @@ export async function seedInitialData(): Promise<void> {
 
     for (const user of SEED_USERS) {
       const { siteName, ...userData } = user;
-      addDocumentNonBlocking(collection(db, "users"), {
+      const userColRef = collection(db, "users");
+      const newUserDocRef = doc(userColRef);
+      
+      setDocumentNonBlocking(newUserDocRef, {
         ...userData,
+        id: newUserDocRef.id,
         siteId: siteIds[siteName] ?? "unassigned",
-      });
+      }, { merge: true });
     }
 
-    const tristenbSnap = await getDocs(
-      query(collection(db, "users"), where("username", "==", "tristenb"))
-    );
-    const tristenbId = tristenbSnap.docs[0]?.id ?? "system";
     const eastEndId = siteIds["East End Pastries"] ?? "unassigned";
 
     for (const text of SEED_SHOWER_THOUGHTS) {
