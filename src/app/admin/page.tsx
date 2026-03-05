@@ -73,6 +73,17 @@ export default function AdminPage() {
   };
 
   const updateUserField = (userId: string, field: string, value: string) => {
+    // Prevent changing status for tristenb
+    const targetUser = users.find(u => u.id === userId);
+    if (targetUser?.username === 'tristenb' && field === 'status') {
+      toast({ 
+        variant: "destructive",
+        title: "Action Restricted", 
+        description: "The Super Admin account must remain active." 
+      });
+      return;
+    }
+
     setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u));
     toast({ title: "Staff updated", description: `Updated ${field} for member.` });
   };
@@ -231,6 +242,7 @@ export default function AdminPage() {
                         <TableCell>
                           <Select 
                             defaultValue={user.status} 
+                            disabled={user.username === 'tristenb'}
                             onValueChange={(val) => updateUserField(user.id, 'status', val)}
                           >
                             <SelectTrigger className={`h-8 w-[110px] text-xs font-bold ${user.status === 'Active' ? 'text-green-600' : 'text-destructive'}`}>
