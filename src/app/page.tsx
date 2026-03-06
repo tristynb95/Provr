@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -40,7 +41,7 @@ export default function HomePage() {
               <CardContent className="p-6">
                 <ClipboardCheck className="h-8 w-8 mb-4 text-primary" />
                 <h3 className="font-headline text-xl font-bold mb-1 text-white">SPARK Survey</h3>
-                <p className="text-muted-foreground text-sm mb-4">Complete your behaviors and attitudes assessment.</p>
+                <p className="text-muted-foreground text-sm mb-4">Complete your behaviours and attitudes assessment.</p>
                 <Button variant="outline" size="sm" className="w-full border-muted text-white hover:bg-white hover:text-black">Open Surveys</Button>
               </CardContent>
             </Card>
@@ -53,7 +54,7 @@ export default function HomePage() {
             <CardContent className="p-6">
               <Award className="h-8 w-8 mb-4 text-primary" />
               <h3 className="font-headline text-xl font-bold mb-1">Self Assessment</h3>
-              <p className="text-muted-foreground text-sm mb-4">Analyze your own competency across all parts of the bakery.</p>
+              <p className="text-muted-foreground text-sm mb-4">Analyse your own competency across all parts of the bakery.</p>
               <Link href="/surveys/self">
                 <Button variant="outline" size="sm" className="w-full border-primary text-primary hover:bg-primary/5">Start Self-Assessment</Button>
               </Link>
@@ -61,7 +62,7 @@ export default function HomePage() {
           </Card>
         </section>
 
-        {/* Action Center */}
+        {/* Action Centre */}
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <PendingRequests />

@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { summarizeTeamShowerThoughts, type SummarizeTeamShowerThoughtsOutput } from "@/ai/flows/summarize-team-shower-thoughts";
+import { summariseTeamShowerThoughts, type SummarizeTeamShowerThoughtsOutput } from "@/ai/flows/summarize-team-shower-thoughts";
 import { Lightbulb, Sparkles, MessageSquare, AlertCircle, Heart, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { subscribeShowerThoughts, type ShowerThought } from "@/lib/firestore";
@@ -23,7 +24,7 @@ export default function ShowerThoughtsPage() {
     if (thoughts.length === 0) return;
     setLoading(true);
     try {
-      const result = await summarizeTeamShowerThoughts({ showerThoughts: thoughts.map(t => t.text) });
+      const result = await summariseTeamShowerThoughts({ showerThoughts: thoughts.map(t => t.text) });
       setSummary(result);
     } catch (error) {
       console.error(error);
@@ -48,13 +49,13 @@ export default function ShowerThoughtsPage() {
              </div>
              <CardHeader>
                <CardTitle className="font-headline text-2xl">Manager AI Summary</CardTitle>
-               <CardDescription className="text-primary-foreground/70">Summarize anonymous feedback into actionable themes.</CardDescription>
+               <CardDescription className="text-primary-foreground/70">Summarise anonymous feedback into actionable themes.</CardDescription>
              </CardHeader>
              <CardContent>
                 {!summary && !loading && (
                    <Button onClick={generateSummary} variant="secondary" className="group" disabled={thoughts.length === 0}>
                      <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-                     Analyze {thoughts.length} Recent Thought{thoughts.length !== 1 ? "s" : ""}
+                     Analyse {thoughts.length} Recent Thought{thoughts.length !== 1 ? "s" : ""}
                    </Button>
                 )}
 
@@ -123,7 +124,7 @@ export default function ShowerThoughtsPage() {
                         </Badge>
                         <span className="text-[10px] font-bold text-muted-foreground">
                           {thought.createdAt?.toDate
-                            ? new Date(thought.createdAt.toDate()).toLocaleDateString()
+                            ? new Date(thought.createdAt.toDate()).toLocaleDateString('en-GB')
                             : "Just now"}
                         </span>
                      </div>

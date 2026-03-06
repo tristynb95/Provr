@@ -1,3 +1,4 @@
+
 export const performanceSurveyData = {
     scale: [
       { value: "1", label: "1 - Needs Development" },
@@ -21,18 +22,18 @@ export const performanceSurveyData = {
         id: "coffee_barista",
         title: "Coffee & Barista Skills",
         questions: [
-          { id: "cb_1", text: "Produces consistently high-quality espresso-based drinks to GAIL's standards." },
+          { id: "cb_1", text: "Produces consistently high-quality espresso-based drinks to professional standards." },
           { id: "cb_2", text: "Manages milk steaming, latte art, and drink presentation to a professional standard." },
           { id: "cb_3", text: "Keeps the coffee machine clean, calibrated, and well-maintained throughout the day." },
           { id: "cb_4", text: "Works efficiently on the coffee machine during peak trade without sacrificing quality." },
-          { id: "cb_5", text: "Demonstrates strong product knowledge of GAIL's coffee origins, blends, and brew methods." },
+          { id: "cb_5", text: "Demonstrates strong product knowledge of coffee origins, blends, and brew methods." },
         ]
       },
       {
         id: "operations",
         title: "Operations & Speed of Service",
         questions: [
-          { id: "op_1", text: "Follows GAIL's operational procedures accurately and consistently." },
+          { id: "op_1", text: "Follows operational procedures accurately and consistently." },
           { id: "op_2", text: "Works with urgency during peak periods and maintains a strong pace throughout the shift." },
           { id: "op_3", text: "Manages their section or station effectively, keeping queues moving and customers served promptly." },
           { id: "op_4", text: "Completes opening, mid-shift, and closing routines to the required standard and on time." },

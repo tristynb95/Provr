@@ -1,3 +1,4 @@
+
 import { Navbar } from "@/components/layout/Navbar";
 import { AISummaryCard } from "@/components/dashboard/AISummaryCard";
 import { FeedbackComparison } from "@/components/dashboard/FeedbackComparison";
@@ -14,7 +15,7 @@ export default function DashboardPage() {
         <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="font-headline text-3xl font-bold tracking-tight mb-2">Your Performance Dashboard</h1>
-            <p className="text-muted-foreground">Tracking your growth at Provr. over time.</p>
+            <p className="text-muted-foreground">Tracking your growth over time.</p>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 md:pb-0">
              <Card className="flex items-center gap-3 p-3 border-none shadow-sm min-w-[150px]">
@@ -48,7 +49,7 @@ export default function DashboardPage() {
             <Tabs defaultValue="competencies">
               <TabsList className="grid w-[300px] grid-cols-2">
                 <TabsTrigger value="competencies">Competencies</TabsTrigger>
-                <TabsTrigger value="spark">SPARK Behaviors</TabsTrigger>
+                <TabsTrigger value="spark">SPARK Behaviours</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -71,7 +72,7 @@ export default function DashboardPage() {
                         <MessageSquare className="h-4 w-4 text-primary" />
                         <span className="text-sm font-bold">Store Manager</span>
                       </div>
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">Oct {12 + i}, 2023</span>
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">{12 + i}/10/2023</span>
                     </div>
                     <p className="text-sm text-muted-foreground">Great shift yesterday! Your handling of the busy breakfast rush was impeccable. Keep up the high energy.</p>
                   </div>

@@ -1,10 +1,11 @@
+
 'use server';
 /**
- * @fileOverview A Genkit flow for summarizing individual feedback received by an employee.
+ * @fileOverview A Genkit flow for summarising individual feedback received by an employee.
  *
- * - summarizeIndividualFeedback - A function that handles the feedback summarization process.
- * - SummarizeIndividualFeedbackInput - The input type for the summarizeIndividualFeedback function.
- * - SummarizeIndividualFeedbackOutput - The return type for the summarizeIndividualFeedback function.
+ * - summariseIndividualFeedback - A function that handles the feedback summarisation process.
+ * - SummarizeIndividualFeedbackInput - The input type for the summariseIndividualFeedback function.
+ * - SummarizeIndividualFeedbackOutput - The return type for the summariseIndividualFeedback function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -32,19 +33,19 @@ export type SummarizeIndividualFeedbackOutput = z.infer<
   typeof SummarizeIndividualFeedbackOutputSchema
 >;
 
-export async function summarizeIndividualFeedback(
+export async function summariseIndividualFeedback(
   input: SummarizeIndividualFeedbackInput
 ): Promise<SummarizeIndividualFeedbackOutput> {
-  return summarizeIndividualFeedbackFlow(input);
+  return summariseIndividualFeedbackFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'summarizeIndividualFeedbackPrompt',
+  name: 'summariseIndividualFeedbackPrompt',
   input: { schema: SummarizeIndividualFeedbackInputSchema },
   output: { schema: SummarizeIndividualFeedbackOutputSchema },
-  prompt: `You are an AI assistant specialized in analyzing employee feedback.
+  prompt: `You are an AI assistant specialised in analysing employee feedback. Please provide all output in British English.
 
-Your task is to summarize the provided feedback comments for an employee. Identify key themes, highlight strengths, and pinpoint areas for development.
+Your task is to summarise the provided feedback comments for an employee. Identify key themes, highlight strengths, and pinpoint areas for development.
 
 Here are the feedback comments:
 {{#each feedbackComments}}
@@ -54,9 +55,9 @@ Here are the feedback comments:
 Provide a concise overall summary, a list of key strengths, and a list of key areas for development. Ensure the output is structured as a JSON object with 'summary', 'strengths', and 'areasForDevelopment' fields, matching the provided schema description.`,
 });
 
-const summarizeIndividualFeedbackFlow = ai.defineFlow(
+const summariseIndividualFeedbackFlow = ai.defineFlow(
   {
-    name: 'summarizeIndividualFeedbackFlow',
+    name: 'summariseIndividualFeedbackFlow',
     inputSchema: SummarizeIndividualFeedbackInputSchema,
     outputSchema: SummarizeIndividualFeedbackOutputSchema,
   },

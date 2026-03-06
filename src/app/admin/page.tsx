@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -196,7 +197,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3 mb-2">
             <ShieldAlert className="h-8 w-8 text-primary" />
             <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
-              {isSuperAdmin ? "Global Control Center" : `Site Management: ${visibleSites[0]?.name}`}
+              {isSuperAdmin ? "Global Control Centre" : `Site Management: ${visibleSites[0]?.name}`}
             </h1>
           </div>
           <p className="text-muted-foreground">
@@ -219,7 +220,7 @@ export default function AdminPage() {
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">{stat.label}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">{stat.label}</p>
                   <p className="text-2xl font-headline font-bold">{stat.value}</p>
                 </div>
               </CardContent>
@@ -241,7 +242,7 @@ export default function AdminPage() {
                     <CardTitle className="font-headline">Employee Registry</CardTitle>
                     <CardDescription>
                       {isSuperAdmin
-                        ? "Manage all staff across the organization"
+                        ? "Manage all staff across the organisation"
                         : `Manage staff for ${visibleSites[0]?.name}`}
                     </CardDescription>
                   </div>

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { summarizeIndividualFeedback, type SummarizeIndividualFeedbackOutput } from "@/ai/flows/summarize-individual-feedback";
+import { summariseIndividualFeedback, type SummarizeIndividualFeedbackOutput } from "@/ai/flows/summarize-individual-feedback";
 import { Sparkles, BrainCircuit, CheckCircle, Target, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -23,7 +23,7 @@ export function AISummaryCard() {
   const generateSummary = async () => {
     setLoading(true);
     try {
-      const result = await summarizeIndividualFeedback({ feedbackComments: mockFeedback });
+      const result = await summariseIndividualFeedback({ feedbackComments: mockFeedback });
       setSummary(result);
     } catch (error) {
       console.error(error);
@@ -43,7 +43,7 @@ export function AISummaryCard() {
           <Sparkles className="h-5 w-5 text-primary" />
           <CardTitle className="font-headline">AI Feedback Digest</CardTitle>
         </div>
-        <CardDescription>We've analyzed your last 5 feedback comments to find themes.</CardDescription>
+        <CardDescription>We've analysed your last 5 feedback comments to find themes.</CardDescription>
       </CardHeader>
       
       <CardContent>
@@ -52,7 +52,7 @@ export function AISummaryCard() {
             <p className="text-muted-foreground mb-4">Click below to generate a smart summary of your peer feedback.</p>
             <Button onClick={generateSummary} className="bg-primary text-primary-foreground group">
               <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-              Generate Summary
+              Generate Summarise
             </Button>
           </div>
         )}
@@ -103,7 +103,7 @@ export function AISummaryCard() {
             </div>
             
             <div className="flex justify-center pt-2">
-              <Button variant="ghost" size="sm" onClick={() => setSummary(null)}>Reset Summary</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSummary(null)}>Reset Summarise</Button>
             </div>
           </div>
         )}
