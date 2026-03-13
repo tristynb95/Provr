@@ -52,7 +52,7 @@ export function AISummaryCard() {
             <p className="text-muted-foreground mb-4">Click below to generate a smart summary of your peer feedback.</p>
             <Button onClick={generateSummary} className="bg-primary text-primary-foreground group">
               <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-              Generate Summarise
+              Generate Summary
             </Button>
           </div>
         )}
@@ -103,7 +103,7 @@ export function AISummaryCard() {
             </div>
             
             <div className="flex justify-center pt-2">
-              <Button variant="ghost" size="sm" onClick={() => setSummary(null)}>Reset Summarise</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSummary(null)}>Reset Summary</Button>
             </div>
           </div>
         )}

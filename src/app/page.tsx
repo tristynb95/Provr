@@ -53,9 +53,9 @@ export default function HomePage() {
               </div>
             <CardContent className="p-6">
               <Award className="h-8 w-8 mb-4 text-primary" />
-              <h3 className="font-headline text-xl font-bold mb-1">Self Assessment</h3>
+              <h3 className="font-headline text-xl font-bold mb-1">SPARK Competency</h3>
               <p className="text-muted-foreground text-sm mb-4">Analyse your own competency across all parts of the bakery.</p>
-              <Link href="/surveys/self">
+              <Link href="/surveys/spark/self">
                 <Button variant="outline" size="sm" className="w-full border-primary text-primary hover:bg-primary/5">Start Self-Assessment</Button>
               </Link>
             </CardContent>
