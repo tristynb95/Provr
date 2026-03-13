@@ -120,6 +120,9 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" /> Edit Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" /> Performance
